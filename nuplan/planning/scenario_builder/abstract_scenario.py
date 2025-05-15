@@ -14,15 +14,15 @@ from nuplan.planning.simulation.trajectory.trajectory_sampling import Trajectory
 
 class AbstractScenario(abc.ABC):
     """
-    Interface for a generic scenarios from any database.
+    所有数据库中通用场景的接口定义。
     """
 
     @property
     @abc.abstractmethod
     def token(self) -> str:
         """
-        Unique identifier of a scenario
-        :return: str representing unique token.
+        获取该场景的唯一标识符。
+        :return: 表示唯一 token 的字符串。
         """
         pass
 
@@ -30,8 +30,8 @@ class AbstractScenario(abc.ABC):
     @abc.abstractmethod
     def log_name(self) -> str:
         """
-        Log name for from which this scenario was created
-        :return: str representing log name.
+        获取创建此场景的日志名称。
+        :return: 日志名称字符串。
         """
         pass
 
@@ -39,8 +39,8 @@ class AbstractScenario(abc.ABC):
     @abc.abstractmethod
     def scenario_name(self) -> str:
         """
-        Name of this scenario, e.g. extraction_xxxx
-        :return: str representing name of this scenario.
+        获取该场景的名称，例如 extraction_xxxx。
+        :return: 场景名称字符串。
         """
         pass
 
@@ -48,8 +48,8 @@ class AbstractScenario(abc.ABC):
     @abc.abstractmethod
     def ego_vehicle_parameters(self) -> VehicleParameters:
         """
-        Query the vehicle parameters of ego
-        :return: VehicleParameters struct.
+        查询自车的车辆参数。
+        :return: 包含车辆参数的 VehicleParameters 对象。
         """
         pass
 
@@ -57,7 +57,8 @@ class AbstractScenario(abc.ABC):
     @abc.abstractmethod
     def scenario_type(self) -> str:
         """
-        :return: type of scenario e.g. [lane_change, lane_follow, ...].
+        获取场景类型。
+        :return: 场景类型字符串，如 lane_change、lane_follow 等。
         """
         pass
 
@@ -65,8 +66,8 @@ class AbstractScenario(abc.ABC):
     @abc.abstractmethod
     def map_api(self) -> AbstractMap:
         """
-        Return the Map API for this scenario
-        :return: AbstractMap.
+        返回该场景使用的地图 API。
+        :return: AbstractMap 实例。
         """
         pass
 
@@ -74,81 +75,81 @@ class AbstractScenario(abc.ABC):
     @abc.abstractmethod
     def database_interval(self) -> float:
         """
-        Database interval in seconds
-        :return: [s] database interval.
+        数据库的时间间隔（秒）。
+        :return: [s] 时间间隔。
         """
         pass
 
     @abc.abstractmethod
     def get_number_of_iterations(self) -> int:
         """
-        Get how many frames does this scenario contain
-        :return: [int] representing number of scenarios.
+        获取该场景包含的帧数。
+        :return: 整数，表示场景中的帧数量。
         """
         pass
 
     @abc.abstractmethod
     def get_time_point(self, iteration: int) -> TimePoint:
         """
-        Get time point of the iteration
-        :param iteration: iteration in scenario 0 <= iteration < number_of_iterations
-        :return: global time point.
+        获取指定迭代次数的时间戳。
+        :param iteration: 场景中的迭代次数，0 <= iteration < number_of_iterations。
+        :return: 全局时间点。
         """
         pass
 
     @property
     def start_time(self) -> TimePoint:
         """
-        Get the start time of a scenario
-        :return: starting time.
+        获取场景开始时间。
+        :return: 开始时间点。
         """
         return self.get_time_point(0)
 
     @property
     def end_time(self) -> TimePoint:
         """
-        Get end time of the scenario
-        :return: end time point.
+        获取场景结束时间。
+        :return: 结束时间点。
         """
         return self.get_time_point(self.get_number_of_iterations() - 1)
 
     @property
     def duration_s(self) -> TimeDuration:
         """
-        Get the duration of the scenario in seconds
-        :return: the difference in seconds between the scenario's final and first timepoints.
+        获取场景持续时间（秒）。
+        :return: 场景起始和结束时间之间的差值（秒）。
         """
         return TimeDuration.from_s(self.end_time.time_s - self.start_time.time_s)
 
     @abc.abstractmethod
     def get_lidar_to_ego_transform(self) -> Transform:
         """
-        Return the transformation matrix between lidar and ego
-        :return: [4x4] rotation and translation matrix.
+        获取激光雷达与自车间的变换矩阵。
+        :return: [4x4] 旋转和平移矩阵。
         """
         pass
 
     @abc.abstractmethod
     def get_mission_goal(self) -> Optional[StateSE2]:
         """
-        Goal far into future (in generally more than 100m far beyond scenario length).
-        :return: StateSE2 for the final state.
+        获取远期目标状态（通常在场景终点后超过100米以上）。
+        :return: 最终状态的 StateSE2。
         """
         pass
 
     @abc.abstractmethod
     def get_route_roadblock_ids(self) -> List[str]:
         """
-        Get list of roadblock ids comprising goal route.
-        :return: List of roadblock id strings.
+        获取组成目标路线的 RoadBlock ID 列表。
+        :return: 道路块 ID 字符串列表。
         """
         pass
 
     @abc.abstractmethod
     def get_expert_goal_state(self) -> StateSE2:
         """
-        Get the final state which the expert driver achieved at the end of the scenario
-        :return: StateSE2 for the final state.
+        获取专家驾驶员在场景结束时达到的目标状态。
+        :return: 最终状态的 StateSE2。
         """
         pass
 
@@ -159,10 +160,10 @@ class AbstractScenario(abc.ABC):
         future_trajectory_sampling: Optional[TrajectorySampling] = None,
     ) -> DetectionsTracks:
         """
-        Return tracked objects from iteration
-        :param iteration: within scenario 0 <= iteration < number_of_iterations
-        :param future_trajectory_sampling: sampling parameters of agent future ground truth predictions if desired.
-        :return: DetectionsTracks.
+        获取指定迭代次数下的追踪对象。
+        :param iteration: 场景内的迭代次数。
+        :param future_trajectory_sampling: 如果需要未来轨迹采样参数。
+        :return: 检测追踪结果 DetectionsTracks。
         """
         pass
 
@@ -176,68 +177,67 @@ class AbstractScenario(abc.ABC):
         future_trajectory_sampling: Optional[TrajectorySampling] = None,
     ) -> DetectionsTracks:
         """
-        Gets all tracked objects present within a time window that stretches from past_time_horizon before the iteration to future_time_horizon afterwards.
-        Also optionally filters the included results on the provided track_tokens.
-        Results will be sorted by object type, then by timestamp, then by track token.
-        :param iteration: The iteration of the scenario to query.
-        :param past_time_horizon [s]: The amount of time to look into the past from the iteration timestamp.
-        :param future_time_horizon [s]: The amount of time to look into the future from the iteration timestamp.
-        :param filter_track_tokens: If provided, then the results will be filtered to only contain objects with
-            track_tokens included in the provided set. If None, then all results are returned.
-        :param future_trajectory_sampling: sampling parameters of agent future ground truth predictions if desired.
-        :return: The retrieved detection tracks.
+        获取从当前迭代向前一段时间内和向后一段时间内的所有追踪对象。
+        可选地根据 track_token 过滤结果。结果按对象类型、时间戳、track_token 排序。
+
+        :param iteration: 要查询的场景迭代次数。
+        :param past_time_horizon: [s] 向前查找的时间范围。
+        :param future_time_horizon: [s] 向后查找的时间范围。
+        :param filter_track_tokens: 若提供，则只返回匹配这些 token 的对象。
+        :param future_trajectory_sampling: agent未来真实轨迹采样参数。
+        :return: 检索到的检测追踪数据。
         """
         pass
 
     @property
     def initial_tracked_objects(self) -> DetectionsTracks:
         """
-        Get initial tracked objects
-        :return: DetectionsTracks.
+        获取初始时刻的追踪对象。
+        :return: DetectionsTracks 对象。
         """
         return self.get_tracked_objects_at_iteration(0)
 
     @abc.abstractmethod
     def get_sensors_at_iteration(self, iteration: int, channels: Optional[List[SensorChannel]] = None) -> Sensors:
         """
-        Return sensor from iteration
-        :param iteration: within scenario 0 <= iteration < number_of_iterations
-        :param channels: The sensor channels to return.
-        :return: Sensors.
+        获取指定迭代次数的传感器数据。
+        :param iteration: 场景中的迭代次数。
+        :param channels: 要返回的传感器通道。
+        :return: Sensors 对象。
         """
         pass
 
     @property
     def initial_sensors(self) -> Sensors:
         """
-        Return the initial sensors (e.g. pointcloud)
-        :return: Sensors.
+        获取初始时刻的传感器数据（如点云）。
+        :return: Sensors 对象。
         """
         return self.get_sensors_at_iteration(0)
 
     @abc.abstractmethod
     def get_ego_state_at_iteration(self, iteration: int) -> EgoState:
         """
-        Return ego (expert) state in a dataset
-        :param iteration: within scenario 0 <= iteration < number_of_iterations
-        :return: EgoState of ego.
+        获取指定迭代次数下专家驾驶的自车状态。
+        :param iteration: 场景中的迭代次数。
+        :return: 自车状态 EgoState。
         """
         pass
 
     @property
     def initial_ego_state(self) -> EgoState:
         """
-        Return the initial ego state
-        :return: EgoState of ego.
+        获取初始时刻的自车状态。
+        :return: 自车状态 EgoState。
         """
         return self.get_ego_state_at_iteration(0)
 
     @abc.abstractmethod
     def get_traffic_light_status_at_iteration(self, iteration: int) -> Generator[TrafficLightStatusData, None, None]:
         """
-        Get traffic light status at an iteration.
-        :param iteration: within scenario 0 <= iteration < number_of_iterations
-        :return traffic light status at the iteration.
+        获取指定迭代次数下的交通灯状态。
+        :param iteration: 场景中的迭代次数。
+        :return: 当前迭代的交通灯状态。
         """
         pass
 
@@ -246,12 +246,12 @@ class AbstractScenario(abc.ABC):
         self, iteration: int, time_horizon: float, num_samples: Optional[int] = None
     ) -> Generator[TrafficLightStatuses, None, None]:
         """
-        Gets past traffic light status.
-
-        :param iteration: iteration within scenario 0 <= scenario_iteration < get_number_of_iterations.
-        :param time_horizon [s]: the desired horizon to the past.
-        :param num_samples: number of entries in the future, if None it will be deduced from the DB.
-        :return: Generator object for traffic light history to the past.
+        获取过去时间段内的交通灯状态历史。
+        
+        :param iteration: 场景中的迭代次数。
+        :param time_horizon: [s] 查找过去状态的时间范围。
+        :param num_samples: 历史记录条目数，若为 None 则从数据库推断。
+        :return: 过去交通灯状态的生成器。
         """
         pass
 
@@ -260,29 +260,28 @@ class AbstractScenario(abc.ABC):
         self, iteration: int, time_horizon: float, num_samples: Optional[int] = None
     ) -> Generator[TrafficLightStatuses, None, None]:
         """
-        Gets future traffic light status.
-
-        :param iteration: iteration within scenario 0 <= scenario_iteration < get_number_of_iterations.
-        :param time_horizon [s]: the desired horizon to the future.
-        :param num_samples: number of entries in the future, if None it will be deduced from the DB.
-        :return: Generator object for traffic light history to the future.
+        获取未来时间段内的交通灯状态历史。
+        
+        :param iteration: 场景中的迭代次数。
+        :param time_horizon: [s] 查找未来状态的时间范围。
+        :param num_samples: 历史记录条目数，若为 None 则从数据库推断。
+        :return: 未来交通灯状态的生成器。
         """
         pass
 
     def get_expert_ego_trajectory(self) -> Generator[EgoState, None, None]:
         """
-        Return trajectory that was taken by the expert-driver
-        :return: sequence of agent states taken by ego.
+        获取专家驾驶员的历史轨迹。
+        :return: 自车状态序列。
         """
         return (self.get_ego_state_at_iteration(index) for index in range(self.get_number_of_iterations()))
 
     def get_ego_trajectory_slice(self, start_idx: int, end_idx: int) -> Generator[EgoState, None, None]:
         """
-        Return trajectory that was taken by the expert-driver between start_idx and end_idx
-        :param start_idx: starting index for ego's trajectory
-        :param end_idx: ending index for ego's trajectory
-        :return: sequence of agent states taken by ego
-        timestamp (best matching to the database).
+        获取专家驾驶员在 start_idx 和 end_idx 之间的轨迹。
+        :param start_idx: 轨迹起始索引。
+        :param end_idx: 轨迹结束索引。
+        :return: 自车状态序列。
         """
         return (self.get_ego_state_at_iteration(index) for index in range(start_idx, end_idx))
 
@@ -291,12 +290,11 @@ class AbstractScenario(abc.ABC):
         self, iteration: int, time_horizon: float, num_samples: Optional[int] = None
     ) -> Generator[TimePoint, None, None]:
         """
-        Find timesteps in future
-        :param iteration: iteration within scenario 0 <= scenario_iteration < get_number_of_iterations
-        :param num_samples: number of entries in the future
-        :param time_horizon [s]: the desired horizon to the future
-        :return: the future timestamps with the best matching entries to the desired time_horizon/num_samples
-        timestamp (best matching to the database)
+        获取未来时间戳。
+        :param iteration: 场景中的迭代次数。
+        :param time_horizon: [s] 查找未来状态的时间范围。
+        :param num_samples: 要获取的条目数。
+        :return: 与数据库最接近匹配的未来时间戳。
         """
         pass
 
@@ -305,12 +303,11 @@ class AbstractScenario(abc.ABC):
         self, iteration: int, time_horizon: float, num_samples: Optional[int] = None
     ) -> Generator[TimePoint, None, None]:
         """
-        Find timesteps in past
-        :param iteration: iteration within scenario 0 <= scenario_iteration < get_number_of_iterations
-        :param num_samples: number of entries in the past
-        :param time_horizon [s]: the desired horizon to the past
-        :return: the future timestamps with the best matching entries to the desired time_horizon/num_samples
-        timestamp (best matching to the database)
+        获取过去时间戳。
+        :param iteration: 场景中的迭代次数。
+        :param time_horizon: [s] 查找过去状态的时间范围。
+        :param num_samples: 要获取的条目数。
+        :return: 与数据库最接近匹配的过去时间戳。
         """
         pass
 
@@ -319,12 +316,11 @@ class AbstractScenario(abc.ABC):
         self, iteration: int, time_horizon: float, num_samples: Optional[int] = None
     ) -> Generator[EgoState, None, None]:
         """
-        Find ego future trajectory
-        :param iteration: iteration within scenario 0 <= scenario_iteration < get_number_of_iterations
-        :param num_samples: number of entries in the future
-        :param time_horizon [s]: the desired horizon to the future
-        :return: the future ego trajectory with the best matching entries to the desired time_horizon/num_samples
-        timestamp (best matching to the database)
+        获取自车未来的轨迹。
+        :param iteration: 场景中的迭代次数。
+        :param time_horizon: [s] 查找未来轨迹的时间范围。
+        :param num_samples: 要获取的条目数。
+        :return: 与数据库最接近匹配的自车未来轨迹。
         """
         pass
 
@@ -333,12 +329,11 @@ class AbstractScenario(abc.ABC):
         self, iteration: int, time_horizon: float, num_samples: Optional[int] = None
     ) -> Generator[EgoState, None, None]:
         """
-        Find ego past trajectory
-        :param iteration: iteration within scenario 0 <= scenario_iteration < get_number_of_iterations
-        :param num_samples: number of entries in the future
-        :param time_horizon [s]: the desired horizon to the future
-        :return: the past ego trajectory with the best matching entries to the desired time_horizon/num_samples
-        timestamp (best matching to the database)
+        获取自车过去的轨迹。
+        :param iteration: 场景中的迭代次数。
+        :param time_horizon: [s] 查找过去轨迹的时间范围。
+        :param num_samples: 要获取的条目数。
+        :return: 与数据库最接近匹配的自车过去轨迹。
         """
         pass
 
@@ -351,13 +346,12 @@ class AbstractScenario(abc.ABC):
         channels: Optional[List[SensorChannel]] = None,
     ) -> Generator[Sensors, None, None]:
         """
-        Find past sensors
-        :param iteration: iteration within scenario 0 <= scenario_iteration < get_number_of_iterations
-        :param time_horizon: [s] the desired horizon to the future
-        :param num_samples: number of entries in the future
-        :param channels: The sensor channels to return.
-        :return: the past sensors with the best matching entries to the desired time_horizon/num_samples
-        timestamp (best matching to the database)
+        获取过去时间段内的传感器数据。
+        :param iteration: 场景中的迭代次数。
+        :param time_horizon: [s] 查找过去数据的时间范围。
+        :param num_samples: 要获取的数据条目数。
+        :param channels: 要返回的传感器通道。
+        :return: 与数据库最接近匹配的过去传感器数据。
         """
         pass
 
@@ -370,12 +364,12 @@ class AbstractScenario(abc.ABC):
         future_trajectory_sampling: Optional[TrajectorySampling] = None,
     ) -> Generator[DetectionsTracks, None, None]:
         """
-        Find past detections.
-        :param iteration: iteration within scenario 0 <= scenario_iteration < get_number_of_iterations.
-        :param num_samples: number of entries in the future.
-        :param time_horizon [s]: the desired horizon to the future.
-        :param future_trajectory_sampling: sampling parameters of agent future ground truth predictions if desired.
-        :return: the past detections.
+        获取过去时间段内的检测对象。
+        :param iteration: 场景中的迭代次数。
+        :param time_horizon: [s] 查找过去数据的时间范围。
+        :param num_samples: 要获取的数据条目数。
+        :param future_trajectory_sampling: agent未来轨迹采样参数。
+        :return: 与数据库最接近匹配的过去检测对象。
         """
         pass
 
@@ -388,11 +382,11 @@ class AbstractScenario(abc.ABC):
         future_trajectory_sampling: Optional[TrajectorySampling] = None,
     ) -> Generator[DetectionsTracks, None, None]:
         """
-        Find future detections.
-        :param iteration: iteration within scenario 0 <= scenario_iteration < get_number_of_iterations.
-        :param num_samples: number of entries in the future.
-        :param time_horizon [s]: the desired horizon to the future.
-        :param future_trajectory_sampling: sampling parameters of agent future ground truth predictions if desired.
-        :return: the past detections.
+        获取未来时间段内的检测对象。
+        :param iteration: 场景中的迭代次数。
+        :param time_horizon: [s] 查找未来数据的时间范围。
+        :param num_samples: 要获取的数据条目数。
+        :param future_trajectory_sampling: agent未来轨迹采样参数。
+        :return: 与数据库最接近匹配的未来检测对象。
         """
         pass

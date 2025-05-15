@@ -11,41 +11,41 @@ from nuplan.planning.utils.multithreading.worker_pool import WorkerPool
 
 
 class RepartitionStrategy(Enum):
-    """Repartition strategy used when caching scenarios in a distributed setting."""
+    """分布式场景缓存时使用的重新分区策略。"""
 
-    REPARTITION_FILE_DISK = 1  # Loading scenarios from files, then redistribute to balance
-    INLINE = 2  # Build all scenarios on each worker, then distribute evenly
+    REPARTITION_FILE_DISK = 1  # 从文件加载后进行重分布以实现负载均衡
+    INLINE = 2  # 每个 worker 上构建全部场景，然后均匀分发
 
 
 class AbstractScenarioBuilder(abc.ABC):
-    """Interface for generic scenario builder."""
+    """通用场景构造器接口。"""
 
     @classmethod
     @abc.abstractmethod
     def get_scenario_type(cls) -> Type[AbstractScenario]:
-        """Get the type of scenarios that this builder constructs."""
+        """获取该构建器所构造的场景类型。"""
         pass
 
     @abc.abstractmethod
     def get_scenarios(self, scenario_filter: ScenarioFilter, worker: WorkerPool) -> List[AbstractScenario]:
         """
-        Retrieve filtered scenarios from the database.
-        :param scenario_filter: Structure that contains scenario filtering instructions.
-        :param worker: Worker pool for concurrent scenario processing.
-        :return: A list of scenarios.
+        从数据库中提取过滤后的场景。
+        :param scenario_filter: 包含场景过滤指令的结构体。
+        :param worker: 并行处理用的线程池。
+        :return: 场景列表。
         """
         pass
 
     @abc.abstractmethod
     def get_map_factory(self) -> AbstractMapFactory:
         """
-        Get a map factory instance.
+        获取地图工厂实例。
         """
         pass
 
     @property
     def repartition_strategy(self) -> RepartitionStrategy:
         """
-        Gets the repartition strategy used for caching in a distributed setting.
+        获取在分布式设置中用于缓存的重新分区策略。
         """
         pass

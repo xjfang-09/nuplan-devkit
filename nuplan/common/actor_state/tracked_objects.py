@@ -14,11 +14,11 @@ TrackedObject = Union[Agent, StaticObject, SceneObject, AgentTemporalState]
 
 
 class TrackedObjects:
-    """Class representing tracked objects, a collection of SceneObjects"""
+    """表示追踪对象的类，是 SceneObject 的集合"""
 
     def __init__(self, tracked_objects: Optional[List[TrackedObject]] = None):
         """
-        :param tracked_objects: List of tracked objects
+        :param tracked_objects: 被追踪的对象列表
         """
         tracked_objects = tracked_objects if tracked_objects is not None else []
 
@@ -27,12 +27,12 @@ class TrackedObjects:
         )
 
     def __iter__(self) -> Iterable[TrackedObject]:
-        """When iterating return the tracked objects."""
+        """遍历对象时返回追踪对象列表"""
         return iter(self.tracked_objects)
 
     @classmethod
     def from_oriented_boxes(cls, boxes: List[OrientedBox]) -> TrackedObjects:
-        """When iterating return the tracked objects."""
+        """从 oriented box 构建追踪对象列表"""
         scene_objects = [
             SceneObject(
                 TrackedObjectType.GENERIC_OBJECT,
@@ -46,8 +46,8 @@ class TrackedObjects:
     @cached_property
     def _ranges_per_type(self) -> Dict[TrackedObjectType, Tuple[int, int]]:
         """
-        Returns the start and end index of the range of agents for each agent type
-        in the list of agents (sorted by agent type). The ranges are cached for subsequent calls.
+        返回每种追踪对象类型在列表中的起始和结束索引范围（按类型排序）。
+        这些范围会被缓存以便后续调用。
         """
         ranges_per_type: Dict[TrackedObjectType, Tuple[int, int]] = {}
 
@@ -75,22 +75,22 @@ class TrackedObjects:
 
     def get_tracked_objects_of_type(self, tracked_object_type: TrackedObjectType) -> List[TrackedObject]:
         """
-        Gets the sublist of agents of a particular TrackedObjectType
-        :param tracked_object_type: The query TrackedObjectType
-        :return: List of the present agents of the query type. Throws an error if the key is invalid.
+        获取特定类型的追踪对象子列表
+        :param tracked_object_type: 查询的追踪对象类型
+        :return: 指定类型的追踪对象列表。若无该类型对象则返回空列表
         """
         if tracked_object_type in self._ranges_per_type:
             start_idx, end_idx = self._ranges_per_type[tracked_object_type]
             return self.tracked_objects[start_idx:end_idx]
 
         else:
-            # There are no objects of the queried type
+            # 不存在查询类型的对象
             return []
 
     def get_agents(self) -> List[Agent]:
         """
-        Getter for the tracked objects which are Agents
-        :return: list of Agents
+        获取所有 Agent 类型的追踪对象
+        :return: Agent 对象列表
         """
         agents = []
         for agent_type in AGENT_TYPES:
@@ -99,8 +99,8 @@ class TrackedObjects:
 
     def get_static_objects(self) -> List[StaticObject]:
         """
-        Getter for the tracked objects which are StaticObjects
-        :return: list of StaticObjects
+        获取所有 StaticObject 类型的追踪对象
+        :return: StaticObject 对象列表
         """
         static_objects = []
         for static_object_type in STATIC_OBJECT_TYPES:
@@ -109,15 +109,15 @@ class TrackedObjects:
 
     def __len__(self) -> int:
         """
-        :return: The number of tracked objects in the class
+        :return: 当前追踪对象的数量
         """
         return len(self.tracked_objects)
 
     def get_tracked_objects_of_types(self, tracked_object_types: List[TrackedObjectType]) -> List[TrackedObject]:
         """
-        Gets the sublist of agents of particular TrackedObjectTypes
-        :param tracked_object_types: The query TrackedObjectTypes
-        :return: List of the present agents of the query types. Throws an error if the key is invalid.
+        获取多个指定类型的追踪对象
+        :param tracked_object_types: 要查询的多个追踪对象类型
+        :return: 包含所有查询类型的追踪对象列表
         """
         open_loop_tracked_objects = []
         for _type in tracked_object_types:

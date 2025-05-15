@@ -14,13 +14,12 @@ def get_velocity_shifted(
     displacement: StateVector2D, ref_velocity: StateVector2D, ref_angular_vel: float
 ) -> StateVector2D:
     """
-    Computes the velocity at a query point on the same planar rigid body as a reference point.
-    :param displacement: [m] The displacement vector from the reference to the query point
-    :param ref_velocity: [m/s] The velocity vector at the reference point
-    :param ref_angular_vel: [rad/s] The angular velocity of the body around the vertical axis
-    :return: [m/s] The velocity vector at the given displacement.
+    计算刚体上某点相对于参考点的速度。
+    :param displacement: [m] 从参考点到查询点的位移向量。
+    :param ref_velocity: [m/s] 参考点的速度向量。
+    :param ref_angular_vel: [rad/s] 刚体绕垂直轴的角速度。
+    :return: [m/s] 给定位移下的速度向量。
     """
-    # From cross product of velocity transfer formula in 2D
     velocity_shift_term: npt.NDArray[np.float64] = np.array(
         [-displacement.y * ref_angular_vel, displacement.x * ref_angular_vel]
     )
@@ -31,12 +30,12 @@ def get_acceleration_shifted(
     displacement: StateVector2D, ref_accel: StateVector2D, ref_angular_vel: float, ref_angular_accel: float
 ) -> StateVector2D:
     """
-    Computes the acceleration at a query point on the same planar rigid body as a reference point.
-    :param displacement: [m] The displacement vector from the reference to the query point
-    :param ref_accel: [m/s^2] The acceleration vector at the reference point
-    :param ref_angular_vel: [rad/s] The angular velocity of the body around the vertical axis
-    :param ref_angular_accel: [rad/s^2] The angular acceleration of the body around the vertical axis
-    :return: [m/s^2] The acceleration vector at the given displacement.
+    计算刚体上某点相对于参考点的加速度。
+    :param displacement: [m] 从参考点到查询点的位移向量。
+    :param ref_accel: [m/s^2] 参考点的加速度向量。
+    :param ref_angular_vel: [rad/s] 刚体绕垂直轴的角速度。
+    :param ref_angular_accel: [rad/s^2] 刚体绕垂直轴的角加速度。
+    :return: [m/s^2] 给定位移下的加速度向量。
     """
     centripetal_acceleration_term = displacement.array * ref_angular_vel**2
     angular_acceleration_term = displacement.array * ref_angular_accel
@@ -46,10 +45,10 @@ def get_acceleration_shifted(
 
 def _get_beta(steering_angle: float, wheel_base: float) -> float:
     """
-    Computes beta, the angle from rear axle to COG at instantaneous center of rotation
-    :param [rad] steering_angle: steering angle of the car
-    :param [m] wheel_base: distance between the axles
-    :return: [rad] Value of beta
+    计算 beta 值，即后轴到质心的角度（瞬时旋转中心）。
+    :param steering_angle: [rad] 车辆转向角度。
+    :param wheel_base: [m] 轴距。
+    :return: [rad] beta 的值。
     """
     beta = math.atan2(math.tan(steering_angle), wheel_base)
     return beta
@@ -57,14 +56,14 @@ def _get_beta(steering_angle: float, wheel_base: float) -> float:
 
 def _projected_velocities_from_cog(beta: float, cog_speed: float) -> Tuple[float, float]:
     """
-    Computes the projected velocities at the rear axle using the Bicycle kinematic model using COG data
-    :param beta: [rad] the angle from rear axle to COG at instantaneous center of rotation
-    :param cog_speed: [m/s] Magnitude of velocity vector at COG
-    :return: Tuple with longitudinal and lateral velocities [m/s] at the rear axle
+    使用自行车运动学模型从 COG 推导出后轴的速度。
+    :param beta: [rad] 后轴到 COG 的角度。
+    :param cog_speed: [m/s] COG 处的速度大小。
+    :return: 后轴处的纵向与横向速度 [m/s]。
     """
-    # This gives COG longitudinal, which is the same as rear axle
+    # 根据模型假设，COG 纵向速度等于后轴纵向速度
     rear_axle_forward_velocity = math.cos(beta) * cog_speed  # [m/s]
-    # Lateral velocity is zero, by model assumption
+    # 横向速度为 0
     rear_axle_lateral_velocity = 0
 
     return rear_axle_forward_velocity, rear_axle_lateral_velocity
@@ -74,11 +73,11 @@ def _angular_velocity_from_cog(
     cog_speed: float, length_rear_axle_to_cog: float, beta: float, steering_angle: float
 ) -> float:
     """
-    Computes the angular velocity using the Bicycle kinematic model using COG data.
-    :param cog_speed: [m/s] Magnitude of velocity vector at COG
-    :param length_rear_axle_to_cog: [m] Distance from rear axle to COG
-    :param beta: [rad] angle from rear axle to COG at instantaneous center of rotation
-    :param steering_angle: [rad] of the car
+    使用自行车运动学模型计算自车角速度。
+    :param cog_speed: [m/s] COG 处的速度大小。
+    :param length_rear_axle_to_cog: [m] 后轴到 COG 的距离。
+    :param beta: [rad] 后轴到 COG 的角度。
+    :param steering_angle: [rad] 轮胎转向角度。
     """
     return (cog_speed / length_rear_axle_to_cog) * math.cos(beta) * math.tan(steering_angle)
 
@@ -87,24 +86,24 @@ def _project_accelerations_from_cog(
     rear_axle_longitudinal_velocity: float, angular_velocity: float, cog_acceleration: float, beta: float
 ) -> Tuple[float, float]:
     """
-    Computes the projected accelerations at the rear axle using the Bicycle kinematic model using COG data
-    :param rear_axle_longitudinal_velocity: [m/s] Longitudinal component of velocity vector at COG
-    :param angular_velocity: [rad/s] Angular velocity at COG
-    :param cog_acceleration: [m/s^2] Magnitude of acceleration vector at COG
-    :param beta: [rad] ]the angle from rear axle to COG at instantaneous center of rotation
-    :return: Tuple with longitudinal and lateral velocities [m/s] at the rear axle
+    使用自行车运动学模型从 COG 推导出后轴加速度。
+    :param rear_axle_longitudinal_velocity: [m/s] COG 处的纵向速度。
+    :param angular_velocity: [rad/s] COG 处的角速度。
+    :param cog_acceleration: [m/s^2] COG 处的加速度大小。
+    :param beta: [rad] 后轴到 COG 的角度。
+    :return: 后轴处的纵向和横向加速度 [m/s^2]。
     """
-    # Rigid body assumption, can project from COG
+    # 刚体假设下，可以从 COG 推导加速度
     rear_axle_longitudinal_acceleration = math.cos(beta) * cog_acceleration  # [m/s^2]
 
-    # Centripetal accel is a=v^2 / R and angular_velocity = v / R
+    # 向心加速度 a = v² / R，角速度 ω = v / R
     rear_axle_lateral_acceleration = rear_axle_longitudinal_velocity * angular_velocity  # [m/s^2]
 
     return rear_axle_longitudinal_acceleration, rear_axle_lateral_acceleration
 
 
 class DynamicCarState:
-    """Contains the various dynamic attributes of ego."""
+    """包含自车各类动态属性的类。"""
 
     def __init__(
         self,
@@ -116,12 +115,12 @@ class DynamicCarState:
         tire_steering_rate: float = 0.0,
     ):
         """
-        :param rear_axle_to_center_dist:[m]  Distance (positive) from rear axle to the geometrical center of ego
-        :param rear_axle_velocity_2d: [m/s]Velocity vector at the rear axle
-        :param rear_axle_acceleration_2d: [m/s^2] Acceleration vector at the rear axle
-        :param angular_velocity: [rad/s] Angular velocity of ego
-        :param angular_acceleration: [rad/s^2] Angular acceleration of ego
-        :param tire_steering_rate: [rad/s] Tire steering rate of ego
+        :param rear_axle_to_center_dist: [m] 自车后轴到几何中心的距离（正数）。
+        :param rear_axle_velocity_2d: [m/s] 后轴处的速度矢量。
+        :param rear_axle_acceleration_2d: [m/s^2] 后轴处的加速度矢量。
+        :param angular_velocity: [rad/s] 自车的角速度。
+        :param angular_acceleration: [rad/s^2] 自车的角加速度。
+        :param tire_steering_rate: [rad/s] 轮胎转向速率。
         """
         self._rear_axle_to_center_dist = rear_axle_to_center_dist
         self._angular_velocity = angular_velocity
@@ -133,24 +132,24 @@ class DynamicCarState:
     @property
     def rear_axle_velocity_2d(self) -> StateVector2D:
         """
-        Returns the vectorial velocity at the middle of the rear axle.
-        :return: StateVector2D Containing the velocity at the rear axle
+        获取后轴处的速度矢量。
+        :return: StateVector2D 类型的速度矢量。
         """
         return self._rear_axle_velocity_2d
 
     @property
     def rear_axle_acceleration_2d(self) -> StateVector2D:
         """
-        Returns the vectorial acceleration at the middle of the rear axle.
-        :return: StateVector2D Containing the acceleration at the rear axle
+        获取后轴处的加速度矢量。
+        :return: StateVector2D 类型的加速度矢量。
         """
         return self._rear_axle_acceleration_2d
 
     @cached_property
     def center_velocity_2d(self) -> StateVector2D:
         """
-        Returns the vectorial velocity at the geometrical center of Ego.
-        :return: StateVector2D Containing the velocity at the geometrical center of Ego
+        获取自车几何中心处的速度矢量。
+        :return: StateVector2D 类型的几何中心速度矢量。
         """
         displacement = StateVector2D(self._rear_axle_to_center_dist, 0.0)
         return get_velocity_shifted(displacement, self.rear_axle_velocity_2d, self.angular_velocity)
@@ -158,8 +157,8 @@ class DynamicCarState:
     @cached_property
     def center_acceleration_2d(self) -> StateVector2D:
         """
-        Returns the vectorial acceleration at the geometrical center of Ego.
-        :return: StateVector2D Containing the acceleration at the geometrical center of Ego
+        获取自车几何中心处的加速度矢量。
+        :return: StateVector2D 类型的几何中心加速度矢量。
         """
         displacement = StateVector2D(self._rear_axle_to_center_dist, 0.0)
         return get_acceleration_shifted(
@@ -169,51 +168,50 @@ class DynamicCarState:
     @property
     def angular_velocity(self) -> float:
         """
-        Getter for the angular velocity of ego.
-        :return: [rad/s] Angular velocity
+        获取自车的角速度。
+        :return: [rad/s] 角速度值。
         """
         return self._angular_velocity
 
     @property
     def angular_acceleration(self) -> float:
         """
-        Getter for the angular acceleration of ego.
-        :return: [rad/s^2] Angular acceleration
+        获取自车的角加速度。
+        :return: [rad/s^2] 角加速度值。
         """
         return self._angular_acceleration
 
     @property
     def tire_steering_rate(self) -> float:
         """
-        Getter for the tire steering rate of ego.
-        :return: [rad/s] Tire steering rate
+        获取轮胎的转向速率。
+        :return: [rad/s] 转向速率。
         """
         return self._tire_steering_rate
 
     @cached_property
     def speed(self) -> float:
         """
-        Magnitude of the speed of the center of ego.
-        :return: [m/s] 1D speed
+        获取自车几何中心的速度大小。
+        :return: [m/s] 一维速度值。
         """
         return float(self._rear_axle_velocity_2d.magnitude())
 
     @cached_property
     def acceleration(self) -> float:
         """
-        Magnitude of the acceleration of the center of ego.
-        :return: [m/s^2] 1D acceleration
+        获取自车几何中心的加速度大小。
+        :return: [m/s^2] 一维加速度值。
         """
         return float(self._rear_axle_acceleration_2d.magnitude())
 
     def __eq__(self, other: object) -> bool:
         """
-        Compare two instances whether they are numerically close
-        :param other: object
-        :return: true if the classes are almost equal
+        比较两个 DynamicCarState 实例是否数值相近。
+        :param other: 待比较的对象。
+        :return: 如果对象几乎相等则返回 True。
         """
         if not isinstance(other, DynamicCarState):
-            # Return NotImplemented in case the classes do not match
             return NotImplemented
 
         return (
@@ -226,7 +224,7 @@ class DynamicCarState:
         )
 
     def __repr__(self) -> str:
-        """Repr magic method"""
+        """返回该类的字符串表示，用于调试"""
         return (
             f"Rear Axle| velocity: {self.rear_axle_velocity_2d}, acceleration: {self.rear_axle_acceleration_2d}\n"
             f"Center   | velocity: {self.center_velocity_2d}, acceleration: {self.center_acceleration_2d}\n"
@@ -245,14 +243,14 @@ class DynamicCarState:
         tire_steering_rate: float = 0.0,
     ) -> DynamicCarState:
         """
-        Construct ego state from rear axle parameters
-        :param rear_axle_to_center_dist: [m] distance between center and rear axle
-        :param rear_axle_velocity_2d: [m/s] velocity at rear axle
-        :param rear_axle_acceleration_2d: [m/s^2] acceleration at rear axle
-        :param angular_velocity: [rad/s] angular velocity
-        :param angular_acceleration: [rad/s^2] angular acceleration
-        :param tire_steering_rate: [rad/s] tire steering_rate
-        :return: constructed DynamicCarState of ego.
+        使用后轴参数构建自车状态。
+        :param rear_axle_to_center_dist: [m] 几何中心到后轴的距离。
+        :param rear_axle_velocity_2d: [m/s] 后轴处的速度矢量。
+        :param rear_axle_acceleration_2d: [m/s^2] 后轴处的加速度矢量。
+        :param angular_velocity: [rad/s] 角速度。
+        :param angular_acceleration: [rad/s^2] 角加速度。
+        :param tire_steering_rate: [rad/s] 轮胎转向速率。
+        :return: 构建完成的 DynamicCarState 实例。
         """
         return DynamicCarState(
             rear_axle_to_center_dist=rear_axle_to_center_dist,
@@ -274,24 +272,24 @@ class DynamicCarState:
         tire_steering_rate: float = 0.0,
     ) -> DynamicCarState:
         """
-        Construct ego state from rear axle parameters
-        :param wheel_base: distance between axles [m]
-        :param rear_axle_to_center_dist: distance between center and rear axle [m]
-        :param cog_speed: magnitude of speed COG [m/s]
-        :param cog_acceleration: magnitude of acceleration at COG [m/s^s]
-        :param steering_angle: steering angle at tire [rad]
-        :param angular_acceleration: angular acceleration
-        :param tire_steering_rate: tire steering rate
-        :return: constructed DynamicCarState of ego.
+        使用 COG 参数构建自车状态。
+        :param wheel_base: [m] 轴距。
+        :param rear_axle_to_center_dist: [m] 几何中心到后轴的距离。
+        :param cog_speed: [m/s] COG 处的速度大小。
+        :param cog_acceleration: [m/s^2] COG 处的加速度大小。
+        :param steering_angle: [rad] 轮胎转向角度。
+        :param angular_acceleration: [rad/s^2] 角加速度。
+        :param tire_steering_rate: [rad/s] 轮胎转向速率。
+        :return: 构建完成的 DynamicCarState 实例。
         """
-        # under kinematic state assumption: compute additionally needed states
+        # 在运动学模型假设下：推导所需其他状态
         beta = _get_beta(steering_angle, wheel_base)
 
         rear_axle_longitudinal_velocity, rear_axle_lateral_velocity = _projected_velocities_from_cog(beta, cog_speed)
 
         angular_velocity = _angular_velocity_from_cog(cog_speed, wheel_base, beta, steering_angle)
 
-        # compute acceleration at rear axle given the kinematic assumptions
+        # 根据运动学模型推导后轴加速度
         longitudinal_acceleration, lateral_acceleration = _project_accelerations_from_cog(
             rear_axle_longitudinal_velocity, angular_velocity, cog_acceleration, beta
         )

@@ -12,7 +12,7 @@ from nuplan.planning.simulation.trajectory.predicted_trajectory import Predicted
 
 class EgoTemporalState(AgentTemporalState):
     """
-    Temporal ego state, with future and past trajectory
+    包含自车当前状态及其过去和未来轨迹的时间状态。
     """
 
     def __init__(
@@ -22,10 +22,10 @@ class EgoTemporalState(AgentTemporalState):
         predictions: Optional[List[PredictedTrajectory]] = None,
     ):
         """
-        Initialize temporal state
-        :param current_state: current state of ego
-        :param past_trajectory: past trajectory, where last waypoint represents the same position as current state
-        :param predictions: multimodal predictions, or future trajectory
+        初始化时间状态。
+        :param current_state: 自车当前状态。
+        :param past_trajectory: 之前的轨迹，最后路径点应与当前状态位置相同。
+        :param predictions: 多模态预测列表，或未来轨迹。
         """
         super().__init__(
             initial_time_stamp=current_state.time_point, predictions=predictions, past_trajectory=past_trajectory
@@ -35,22 +35,24 @@ class EgoTemporalState(AgentTemporalState):
     @property
     def ego_current_state(self) -> EgoState:
         """
-        :return: the current ego state
+        获取自车当前状态。
+        :return: EgoState 实例。
         """
         return self._ego_current_state
 
     @property
     def ego_previous_state(self) -> Optional[EgoState]:
         """
-        :return: the previous ego state if exists. This is just a proxy to make sure the return type is correct.
+        如果存在，获取自车前一时刻的状态。
+        :return: 返回类型正确的前一状态。
         """
         return self.previous_state
 
     @cached_property
     def agent(self) -> Agent:
         """
-        Casts the EgoTemporalState to an Agent object.
-        :return: An Agent object with the parameters of EgoState
+        将 EgoTemporalState 转换为 Agent 对象。
+        :return: 包含 EgoState 参数的 Agent 实例。
         """
         return Agent(
             metadata=self.ego_current_state.scene_object_metadata,

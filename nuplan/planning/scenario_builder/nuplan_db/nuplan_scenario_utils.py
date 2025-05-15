@@ -31,12 +31,12 @@ from nuplan.planning.simulation.trajectory.trajectory_sampling import Trajectory
 
 logger = logging.getLogger(__name__)
 
-LIDAR_PC_CACHE = 16 * 2**10  # 16K
+LIDAR_PC_CACHE = 16 * 2**10  # 16K 缓存大小
 
-DEFAULT_SCENARIO_NAME = 'unknown'  # name of scenario (e.g. ego overtaking)
-DEFAULT_SCENARIO_DURATION = 20.0  # [s] duration of the scenario (e.g. extract 20s from when the event occurred)
-DEFAULT_EXTRACTION_OFFSET = 0.0  # [s] offset of the scenario (e.g. start at -5s from when the event occurred)
-DEFAULT_SUBSAMPLE_RATIO = 1.0  # ratio used sample the scenario (e.g. a 0.1 ratio means sample from 20Hz to 2Hz)
+DEFAULT_SCENARIO_NAME = 'unknown'  # 场景名称（如：自车超车）
+DEFAULT_SCENARIO_DURATION = 20.0  # [s] 场景持续时间（如：事件发生后提取20秒数据）
+DEFAULT_EXTRACTION_OFFSET = 0.0  # [s] 场景起始偏移量（如：从事件前5秒开始）
+DEFAULT_SUBSAMPLE_RATIO = 1.0  # 子采样比率（如：0.1 表示从20Hz降采样到2Hz）
 
 NUPLAN_DATA_ROOT = os.getenv('NUPLAN_DATA_ROOT', "/data/sets/nuplan/")
 
@@ -44,25 +44,23 @@ NUPLAN_DATA_ROOT = os.getenv('NUPLAN_DATA_ROOT', "/data/sets/nuplan/")
 @dataclass(frozen=True)
 class ScenarioExtractionInfo:
     """
-    Structure containing information used to extract a scenario (lidarpc sequence).
+    包含用于提取场景（lidarpc 序列）的信息。
     """
 
-    scenario_name: str = DEFAULT_SCENARIO_NAME  # name of the scenario
-    scenario_duration: float = DEFAULT_SCENARIO_DURATION  # [s] duration of the scenario
-    extraction_offset: float = DEFAULT_EXTRACTION_OFFSET  # [s] offset of the scenario
-    subsample_ratio: float = DEFAULT_SUBSAMPLE_RATIO  # ratio to sample the scenario
+    scenario_name: str = DEFAULT_SCENARIO_NAME  # 场景名称
+    scenario_duration: float = DEFAULT_SCENARIO_DURATION  # [s] 场景持续时间
+    extraction_offset: float = DEFAULT_EXTRACTION_OFFSET  # [s] 场景起始偏移量
+    subsample_ratio: float = DEFAULT_SUBSAMPLE_RATIO  # 场景采样比率
 
     def __post_init__(self) -> None:
-        """Sanitize class attributes."""
-        assert 0.0 < self.scenario_duration, f'Scenario duration has to be greater than 0, got {self.scenario_duration}'
-        assert (
-            0.0 < self.subsample_ratio <= 1.0
-        ), f'Subsample ratio has to be between 0 and 1, got {self.subsample_ratio}'
+        """校验类属性"""
+        assert 0.0 < self.scenario_duration, f"场景持续时间必须大于0，当前值：{self.scenario_duration}"
+        assert 0.0 < self.subsample_ratio <= 1.0, f"子采样率需在0~1之间，当前值：{self.subsample_ratio}"
 
 
 class ScenarioMapping:
     """
-    Structure that maps each scenario type to instructions used in extracting it.
+    将每种场景类型映射到对应的提取指令。
     """
 
     def __init__(
@@ -71,10 +69,9 @@ class ScenarioMapping:
         subsample_ratio_override: Optional[float],
     ) -> None:
         """
-        Initializes the scenario mapping class.
-        :param scenario_map: Dictionary with scenario name/type as keys and
-                             tuples of (scenario duration, extraction offset, subsample ratio) as values.
-        :subsample_ratio_override: The override for the subsample ratio if not provided.
+        初始化场景映射类。
+        :param scenario_map: 字典，键是场景名称/类型，值是 (持续时间, 偏移量, 子采样率) 的元组。
+        :param subsample_ratio_override: 如果提供了此参数，则会覆盖默认的子采样率。
         """
         self.mapping: Dict[str, ScenarioExtractionInfo] = {}
         self.subsample_ratio_override = (
@@ -93,10 +90,10 @@ class ScenarioMapping:
 
     def get_extraction_info(self, scenario_type: str) -> Optional[ScenarioExtractionInfo]:
         """
-        Accesses the scenario mapping using a query scenario type.
-        If the scenario type is not found, a default extraction info object is returned.
-        :param scenario_type: Scenario type to query for.
-        :return: Scenario extraction information for the queried scenario type.
+        根据查询的场景类型获取提取信息。
+        如果未找到对应类型，则返回一个默认提取信息对象。
+        :param scenario_type: 要查询的场景类型。
+        :return: 对应的场景提取信息。
         """
         return (
             self.mapping[scenario_type]
@@ -107,35 +104,30 @@ class ScenarioMapping:
 
 def download_file_if_necessary(data_root: str, potentially_remote_path: str, verbose: bool = False) -> str:
     """
-    Downloads the db file if necessary.
-    :param data_root: Path's data root.
-    :param potentially_remote_path: The path from which to download the file.
-    :param verbose: Verbosity level.
-    :return: The local path for the file.
+    如有必要，下载数据库文件。
+    :param data_root: 数据根目录。
+    :param potentially_remote_path: 文件路径，可能需要从远程下载。
+    :param verbose: 是否启用详细日志。
+    :return: 本地文件路径。
     """
-    # If the file path is a local directory and exists, then return that.
-    # e.g. /data/sets/nuplan/nuplan-v1.1/splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
+    # 如果文件已存在本地，直接返回
     if os.path.exists(potentially_remote_path):
         return potentially_remote_path
 
     log_name = absolute_path_to_log_name(potentially_remote_path)
     download_name = log_name + ".db"
 
-    # TODO: CacheStore seems to be buggy.
-    # Behavior seems to be different on our cluster vs locally regarding downloaded file paths.
-    #
-    # Use the underlying stores manually.
+    # TODO: CacheStore 存在一些 bug，此处手动使用底层 store
     os.makedirs(data_root, exist_ok=True)
     local_store = LocalStore(data_root)
 
     if not local_store.exists(download_name):
         blob_store = BlobStoreCreator.create_nuplandb(data_root, verbose=verbose)
 
-        # If we have no matches, download the file.
-        logger.info("DB path not found. Downloading to %s..." % download_name)
+        # 推断远程路径
+        logger.info("未找到 DB 路径。正在下载至 %s..." % download_name)
         start_time = time.time()
 
-        # Infer remote path from local path
         remote_key = potentially_remote_path
         if not remote_key.startswith("s3://"):
             fixed_local_path = convert_legacy_nuplan_path_to_latest(potentially_remote_path)
@@ -143,46 +135,36 @@ def download_file_if_necessary(data_root: str, potentially_remote_path: str, ver
 
         content = blob_store.get(remote_key)
         local_store.put(download_name, content)
-        logger.info("Downloading db file took %.2f seconds." % (time.time() - start_time))
+        logger.info("下载 db 文件耗时 %.2f 秒。" % (time.time() - start_time))
 
     return os.path.join(data_root, download_name)
 
 
 def convert_legacy_nuplan_path_to_latest(legacy_path: str, nuplan_data_root: Optional[str] = None) -> str:
     """
-    Converts known legacy nuPlan path formats to the latest version.
-    Examples:
+    将旧版 nuPlan 路径格式转换为最新版。
+    示例：
     - data_root: /data/sets/nuplan/
-      in:  /data/sets/nuplan/nuplan-v1.1/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
-      out: /data/sets/nuplan/nuplan-v1.1/splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
-    :param legacy_path: Legacy path to convert.
-    :param nuplan_data_root: Optional custom nuPlan data root directory. When None is supplied, the NUPLAN_DATA_ROOT environment variable will be used.
-    :return: Converted input path.
+      输入: /data/sets/nuplan/nuplan-v1.1/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
+      输出: /data/sets/nuplan/nuplan-v1.1/splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
+    :param legacy_path: 需要转换的旧路径。
+    :param nuplan_data_root: 自定义 nuPlan 数据根目录。若未提供则使用环境变量 NUPLAN_DATA_ROOT。
+    :return: 转换后的输入路径。
     """
-    # sanity check, exit early if no version is found
+    # 安全检查，如果没有版本号则退出
     if legacy_path.find("nuplan-v") == -1:
-        raise ValueError("nuPlan DB path should contain db version in it (e.g: nuplan-v1.1)")
+        raise ValueError("nuPlan DB 路径中应包含版本号（如：nuplan-v1.1）")
 
-    # remove data root, we don't care about them when comparing
-    # intended effect:
-    # /data/sets/nuplan/nuplan-v1.1/mini/2021.09.16.15.12.03_veh-42_01037_01434.db -> /nuplan-v1.1/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
+    # 去除数据根目录，我们只关心后续部分
     if nuplan_data_root is None:
         nuplan_data_root = NUPLAN_DATA_ROOT
     prefix_removed = legacy_path.removeprefix(nuplan_data_root)
 
-    # make sure path doesn't start with '/' due to possible differences in NUPLAN_DATA_ROOT's definition
-    # i.e: NUPLAN_DATA_ROOT may or may not end with `/'
-    # intended effect:
-    # - /nuplan-v1.1/mini/2021.09.16.15.12.03_veh-42_01037_01434.db -> nuplan-v1.1/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
-    # - nuplan-v1.1/mini/2021.09.16.15.12.03_veh-42_01037_01434.db -> nuplan-v1.1/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
+    # 确保路径不以 '/' 开头，避免与 NUPLAN_DATA_ROOT 的结尾斜杠冲突
     prefix_removed = prefix_removed.lstrip("/")
 
-    # our candidate return value
+    # 如果路径中没有 "splits" 目录，插入该目录
     prefix_removed_path = Path(prefix_removed)
-
-    # insert splits if `splits` directory is not found
-    # intended effect:
-    # - nuplan-v1.1/mini/2021.09.16.15.12.03_veh-42_01037_01434.db -> nuplan-v1.1/splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
     if prefix_removed.find("splits") == -1:
         path_parts = list(prefix_removed_path.parts)
         version_directory_index = min(
@@ -198,38 +180,28 @@ def convert_legacy_nuplan_path_to_latest(legacy_path: str, nuplan_data_root: Opt
 
 def infer_remote_key_from_local_path(local_path: str, nuplan_data_root: Optional[str] = None) -> str:
     """
-    Try to infer a file's remote key on s3 based on its local path.
-    Examples:
+    根据本地路径推断 S3 上的远程 key。
+    示例：
     - nuplan_data_root: /data/sets/nuplan/
-      in:  /data/sets/nuplan/nuplan-v1.1/splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
-      out: splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
-    :param local_path: Local path of the file.
-    :param nuplan_data_root: Optional custom nuPlan data root directory. When None is supplied, the NUPLAN_DATA_ROOT environment variable will be used.
-    :return: Inferred remote key.
+      输入: /data/sets/nuplan/nuplan-v1.1/splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
+      输出: splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
+    :param local_path: 本地文件路径。
+    :param nuplan_data_root: 自定义 nuPlan 数据根目录。若未提供则使用环境变量。
+    :return: 推断出的远程 key。
     """
-    # remove local data root
-    # intended effect:
-    # /data/sets/nuplan/nuplan-v1.1/splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db -> /nuplan-v1.1/splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
     if nuplan_data_root is None:
         nuplan_data_root = NUPLAN_DATA_ROOT
     remote_key = local_path.removeprefix(nuplan_data_root)
 
-    # make sure path doesn't start with '/' due to possible differences in NUPLAN_DATA_ROOT's definition
-    # i.e: NUPLAN_DATA_ROOT may or may not end with `/'
-    # intended effect:
-    # - /nuplan-v1.1/splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db -> nuplan-v1.1/splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
-    # - nuplan-v1.1/splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db -> nuplan-v1.1/splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
+    # 硥路径不以 '/' 开头
     remote_key = remote_key.lstrip("/")
 
-    # Remove nuPlan version from path
-    # intended effect:
-    # - nuplan-v1.1/splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db -> splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
+    # 如果路径中没有 `splits`，添加之
     if remote_key.startswith("nuplan-v"):
         remote_key_as_path = Path(remote_key)
         remote_key_as_path = Path(*remote_key_as_path.parts[1:])
         remote_key = str(remote_key_as_path)
 
-    # final result: splits/mini/2021.09.16.15.12.03_veh-42_01037_01434.db
     return remote_key
 
 
@@ -240,12 +212,12 @@ def _process_future_trajectories_for_windowed_agents(
     future_trajectory_sampling: TrajectorySampling,
 ) -> List[TrackedObject]:
     """
-    A helper method to interpolate and parse the future trajectories for windowed agents.
-    :param log_file: The log file to query.
-    :param tracked_objects: The tracked objects to parse.
-    :param agent_indexes: A mapping of [timestamp, [track_token, tracked_object_idx]]
-    :param future_trajectory_sampling: The future trajectory sampling to use for future waypoints.
-    :return: The tracked objects with predicted trajectories included.
+    辅助方法：插值并解析窗口内 agents 的未来轨迹。
+    :param log_file: 要查询的日志文件。
+    :param tracked_objects: 要处理的追踪对象列表。
+    :param agent_indexes: 映射 [timestamp, [track_token, tracked_object_idx]]
+    :param future_trajectory_sampling: 用于未来路径点的轨迹采样。
+    :return: 包含预测轨迹的追踪对象列表。
     """
     agent_future_trajectories: Dict[int, Dict[str, List[Waypoint]]] = {}
     for timestamp in agent_indexes:
@@ -259,26 +231,26 @@ def _process_future_trajectories_for_windowed_agents(
             1e6 * (future_trajectory_sampling.time_horizon + future_trajectory_sampling.interval_length)
         )
 
-        # TODO: This is somewhat inefficient because the resampling should happen in SQL layer
+        # TODO: 这里效率较低，建议将重采样逻辑放在 SQL 层
 
         for track_token, waypoint in get_future_waypoints_for_agents_from_db(
             log_file, list(agent_indexes[timestamp_time].keys()), timestamp_time, end_time
         ):
             agent_future_trajectories[timestamp_time][track_token].append(waypoint)
 
-    for timestamp in agent_future_trajectories:
-        for key in agent_future_trajectories[timestamp]:
-            # We can only interpolate waypoints if there is more than one in the future.
-            if len(agent_future_trajectories[timestamp][key]) == 1:
-                tracked_objects[agent_indexes[timestamp][key]]._predictions = [
-                    PredictedTrajectory(1.0, agent_future_trajectories[timestamp][key])
+    for key in agent_future_trajectories:
+        for track_token in agent_future_trajectories[key]:
+            # 只有未来路径点多于1个才能进行插值
+            if len(agent_future_trajectories[key][track_token]) == 1:
+                tracked_objects[agent_indexes[key][track_token]]._predictions = [
+                    PredictedTrajectory(1.0, agent_future_trajectories[key][track_token])
                 ]
-            elif len(agent_future_trajectories[timestamp][key]) > 1:
-                tracked_objects[agent_indexes[timestamp][key]]._predictions = [
+            elif len(agent_future_trajectories[key][track_token]) > 1:
+                tracked_objects[agent_indexes[key][track_token]]._predictions = [
                     PredictedTrajectory(
                         1.0,
                         interpolate_future_waypoints(
-                            agent_future_trajectories[timestamp][key],
+                            agent_future_trajectories[key][track_token],
                             future_trajectory_sampling.time_horizon,
                             future_trajectory_sampling.interval_length,
                         ),
@@ -297,13 +269,14 @@ def extract_tracked_objects_within_time_window(
     future_trajectory_sampling: Optional[TrajectorySampling] = None,
 ) -> TrackedObjects:
     """
-    Extracts the tracked objects in a time window centered on a token.
-    :param token: The token on which to center the time window.
-    :param past_time_horizon: The time in the past for which to search.
-    :param future_time_horizon: The time in the future for which to search.
-    :param filter_track_tokens: If provided, objects with track_tokens missing from the set will be excluded.
-    :param future_trajectory_sampling: If provided, the future trajectory sampling to use for future waypoints.
-    :return: The retrieved TrackedObjects.
+    提取以指定 token 为中心的时间窗口内的所有追踪对象。
+    :param token: 时间窗口中心 token。
+    :param log_file: 日志文件路径。
+    :param past_time_horizon: 向前查找的时间范围 [s]。
+    :param future_time_horizon: 向后查找的时间范围 [s]。
+    :param filter_track_tokens: 若提供，则只保留这些 track_token 的对象。
+    :param future_trajectory_sampling: 若提供，则用于插值未来路径点。
+    :return: 提取的追踪对象集合。
     """
     tracked_objects: List[TrackedObject] = []
     agent_indexes: Dict[int, Dict[str, int]] = {}
@@ -336,10 +309,11 @@ def extract_tracked_objects(
     future_trajectory_sampling: Optional[TrajectorySampling] = None,
 ) -> TrackedObjects:
     """
-    Extracts all boxes from a lidarpc.
-    :param lidar_pc: Input lidarpc.
-    :param future_trajectory_sampling: If provided, the future trajectory sampling to use for future waypoints.
-    :return: Tracked objects contained in the lidarpc.
+    提取 lidar_pc 中的所有检测框。
+    :param token: lidar_pc 的 token。
+    :param log_file: 日志文件路径。
+    :param future_trajectory_sampling: 若提供，用于插值未来路径点。
+    :return: lidar_pc 中包含的追踪对象。
     """
     tracked_objects: List[TrackedObject] = []
     agent_indexes: Dict[str, int] = {}
@@ -357,14 +331,15 @@ def extract_tracked_objects(
             1e6 * (future_trajectory_sampling.time_horizon + future_trajectory_sampling.interval_length)
         )
 
-        # TODO: This is somewhat inefficient because the resampling should happen in SQL layer
+        # TODO: 此处效率较低，建议将重采样逻辑放在 SQL 层
+
         for track_token, waypoint in get_future_waypoints_for_agents_from_db(
             log_file, list(agent_indexes.keys()), timestamp_time, end_time
         ):
             agent_future_trajectories[track_token].append(waypoint)
 
         for key in agent_future_trajectories:
-            # We can only interpolate waypoints if there is more than one in the future.
+            # 只有未来路径点多于1个才能进行插值
             if len(agent_future_trajectories[key]) == 1:
                 tracked_objects[agent_indexes[key]]._predictions = [
                     PredictedTrajectory(1.0, agent_future_trajectories[key])
@@ -391,12 +366,12 @@ def extract_sensor_tokens_as_scenario(
     scenario_extraction_info: ScenarioExtractionInfo,
 ) -> Generator[str, None, None]:
     """
-    Extract a list of sensor tokens that form a scenario around an anchor timestamp.
-    :param log_file: The log file to access
-    :param sensor_data_source: Parameters for querying the correct table.
-    :param anchor_timestamp: Timestamp of Sensor representing the start of the scenario.
-    :param scenario_extraction_info: Structure containing information used to extract the scenario.
-    :return: List of extracted sensor tokens representing the scenario.
+    提取围绕锚定时间戳的一系列传感器 token 来组成一个场景。
+    :param log_file: 要访问的日志文件。
+    :param sensor_data_source: 查询目标表的参数。
+    :param anchor_timestamp: 场景起始时间戳。
+    :param scenario_extraction_info: 包含提取场景所需信息的结构体。
+    :return: 提取到的传感器 token 列表。
     """
     start_timestamp = int(anchor_timestamp + scenario_extraction_info.extraction_offset * 1e6)
     end_timestamp = int(start_timestamp + scenario_extraction_info.scenario_duration * 1e6)
@@ -412,20 +387,18 @@ def extract_sensor_tokens_as_scenario(
 
 def absolute_path_to_log_name(absolute_path: str) -> str:
     """
-    Gets the log name from the absolute path to a log file.
-    E.g.
-        input: data/sets/nuplan/nuplan-v1.1/splits/mini/2021.10.11.02.57.41_veh-50_01522_02088.db
-        output: 2021.10.11.02.57.41_veh-50_01522_02088
-
-        input: /tmp/abcdef
-        output: abcdef
-    :param absolute_path: The absolute path to a log file.
-    :return: The log name.
+    从日志文件的绝对路径中提取日志名称。
+    示例：
+    - 输入: data/sets/nuplan/nuplan-v1.1/splits/mini/2021.10.11.02.57.41_veh-50_01522_02088.db
+      输出: 2021.10.11.02.57.41_veh-50_01522_02088
+    - 输入: /tmp/abcdef
+      输出: abcdef
+    :param absolute_path: 日志文件的绝对路径。
+    :return: 日志名称。
     """
     filename = os.path.basename(absolute_path)
 
-    # Files generated during caching do not end with ".db"
-    # They have no extension.
+    # 缓存生成的文件没有 .db 扩展名
     if filename.endswith(".db"):
         filename = os.path.splitext(filename)[0]
     return filename
@@ -433,39 +406,38 @@ def absolute_path_to_log_name(absolute_path: str) -> str:
 
 def download_and_cache(key: str, local_store: LocalStore, remote_store: S3Store) -> Optional[BinaryIO]:
     """
-    Downloads and cache the key given. This function assumes that the local and remotes stores are already configured.
-    Data will be downloaded from the remote store's s3 bucket and saved relative to the data root of the local store.
-    This method will initialize the scenario's blob store if it does not already exist.
-    :param key: The key for which to grab the sensor data.
-    :param local_store: Local blob store for loading blobs from local file system.
-    :param remote_store: S3 blob store for loading blobs from AWS S3.
-    :return: The sensor data.
+    下载并缓存指定 key 的数据。
+    本函数假设本地和远程存储已经配置好。
+    数据将从远程存储下载并保存在本地存储中。
+    如果不存在 blob store，将初始化它。
+
+    :param key: 要获取的数据 key。
+    :param local_store: 本地 blob store。
+    :param remote_store: 远程 blob store。
+    :return: 获取的传感器数据。
     """
     if local_store.exists(key):
         return cast(BinaryIO, local_store.get(key))
 
     if remote_store is None:
-        raise RuntimeError(
-            "Remote store is not set and key was not found locally. Try setting NUPLAN_DATA_STORE to 's3'."
-        )
+        raise RuntimeError("远程存储未设置且本地未找到 key。请尝试设置 NUPLAN_DATA_STORE='s3'")
 
-    # Download and store data locally
     try:
         blob = remote_store.get(key)
         local_store.put(key, blob)
         return cast(BinaryIO, local_store.get(key))
     except RuntimeError as error:
-        logging.warning(f"Could not find sensor data locally or remotely. Returning None\nCause: {error}")
+        logging.warning(f"未找到传感器数据。原因：{error}")
         return None
 
 
 def load_point_cloud(lidar_pc: LidarPc, local_store: LocalStore, remote_store: S3Store) -> Optional[LidarPointCloud]:
     """
-    Loads a point cloud given a database LidarPC object.
-    :param lidar_pc: The lidar_pc for which to grab the point cloud.
-    :param local_store: Local blob store for loading blobs from local file system.
-    :param remote_store: S3 blob store for loading blobs from AWS S3.
-    :return: The corresponding point cloud.
+    加载点云数据。
+    :param lidar_pc: LidarPC 对象。
+    :param local_store: 本地 blob store。
+    :param remote_store: 远程 blob store。
+    :return: 加载的点云数据。
     """
     file_type = lidar_pc.filename.split('.')[-1]
     blob = download_and_cache(lidar_pc.filename, local_store, remote_store)
@@ -474,11 +446,11 @@ def load_point_cloud(lidar_pc: LidarPc, local_store: LocalStore, remote_store: S
 
 def load_image(image: ImageDBRow.Image, local_store: LocalStore, remote_store: S3Store) -> Optional[Image]:
     """
-    Loads an image given a database Image object.
-    :param image: The image for which to grab the image.
-    :param local_store: Local blob store for loading blobs from local file system.
-    :param remote_store: S3 blob store for loading blobs from AWS S3.
-    :return: The corresponding image.
+    加载图像数据。
+    :param image: 图像数据库行对象。
+    :param local_store: 本地 blob store。
+    :param remote_store: 远程 blob store。
+    :return: 加载的图像数据。
     """
     blob = download_and_cache(image.filename_jpg, local_store, remote_store)
     return Image.from_buffer(blob) if blob is not None else None

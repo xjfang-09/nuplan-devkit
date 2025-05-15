@@ -11,50 +11,50 @@ from nuplan.common.maps.maps_datatypes import IntersectionType, LaneConnectorTyp
 
 class AbstractMapObject(abc.ABC):
     """
-    Base interface representation of all map objects.
+    所有地图对象的基本接口定义。
     """
 
     def __init__(self, object_id: str):
         """
-        Constructor of the base lane type.
-        :param object_id: unique identifier of the map object.
+        构造函数。
+        :param object_id: 地图对象的唯一标识符。
         """
         self.id = str(object_id)
 
 
 class PolygonMapObject(AbstractMapObject):
     """
-    A class to represent any map object that can be represented as a polygon.
+    用于表示可以用多边形表示的地图对象的基类。
     """
 
     @property
     @abc.abstractmethod
     def polygon(self) -> Polygon:
         """
-        Returns the surface of the map object as a Polygon.
-        :return: The map object as a Polygon.
+        返回地图对象的多边形表示。
+        :return: 表示地图对象的 Polygon 对象。
         """
         pass
 
     def contains_point(self, point: Point2D) -> bool:
         """
-        Checks if the specified point is part of the map object polygon.
-        :return: True if the point is within the polygon.
+        判断指定点是否在该地图对象的多边形范围内。
+        :return: 如果点位于多边形内返回 True，否则返回 False。
         """
         return bool(self.polygon.contains(Point(point.x, point.y)))
 
 
 class GraphEdgeMapObject(PolygonMapObject):
     """
-    A class to represent any map object that can be an edge as a part of the map graph connectivity.
+    表示地图图结构中边类型的地图对象。
     """
 
     @property
     @abc.abstractmethod
     def incoming_edges(self) -> List[GraphEdgeMapObject]:
         """
-        Returns incoming edges connecting to this edge.
-        :return: a list of GraphEdgeMapObject.
+        获取连接到此边的入边。
+        :return: GraphEdgeMapObject 的列表。
         """
         pass
 
@@ -62,8 +62,8 @@ class GraphEdgeMapObject(PolygonMapObject):
     @abc.abstractmethod
     def outgoing_edges(self) -> List[GraphEdgeMapObject]:
         """
-        Returns outgoing edges from this edge.
-        :return: a list of GraphEdgeMapObject.
+        获取从此边出发的出边。
+        :return: GraphEdgeMapObject 的列表。
         """
         pass
 
@@ -71,24 +71,23 @@ class GraphEdgeMapObject(PolygonMapObject):
     @abc.abstractmethod
     def parallel_edges(self) -> List[GraphEdgeMapObject]:
         """
-        Returns edges parallel to this edge including itself.
-        :return: a list of GraphEdgeMapObjects.
+        获取与此边平行的边（包括自己）。
+        :return: GraphEdgeMapObject 的列表。
         """
         pass
 
 
 class LaneGraphEdgeMapObject(GraphEdgeMapObject):
     """
-    A class to represent a map object that can be an edge as a part of the map graph connectivity and contains a
-    BaselinePath within it.
+    可以作为地图图结构一部分，并且内部包含基准线的地图对象。
     """
 
     @property
     @abc.abstractmethod
     def incoming_edges(self) -> List[LaneGraphEdgeMapObject]:  # type: ignore
         """
-        Returns incoming edges connecting to this edge.
-        :return: a list of LaneGraphEdgeMapObject.
+        获取连接到此车道边的入边。
+        :return: LaneGraphEdgeMapObject 的列表。
         """
         pass
 
@@ -96,8 +95,8 @@ class LaneGraphEdgeMapObject(GraphEdgeMapObject):
     @abc.abstractmethod
     def outgoing_edges(self) -> List[LaneGraphEdgeMapObject]:  # type: ignore
         """
-        Returns outgoing edges from this edge.
-        :return: a list of LaneGraphEdgeMapObject.
+        获取从此车道边出发的出边。
+        :return: LaneGraphEdgeMapObject 的列表。
         """
         pass
 
@@ -105,8 +104,8 @@ class LaneGraphEdgeMapObject(GraphEdgeMapObject):
     @abc.abstractmethod
     def baseline_path(self) -> PolylineMapObject:
         """
-        Getter function for obtaining the baseline path of the lane.
-        :return: Baseline path of the lane.
+        获取车道的中心线路径。
+        :return: 车道的中心线。
         """
         pass
 
@@ -114,8 +113,8 @@ class LaneGraphEdgeMapObject(GraphEdgeMapObject):
     @abc.abstractmethod
     def left_boundary(self) -> PolylineMapObject:
         """
-        Getter function for obtaining the left boundary of the lane.
-        :return: Left boundary of the lane.
+        获取车道的左边界。
+        :return: 车道左侧边界。
         """
         pass
 
@@ -123,8 +122,8 @@ class LaneGraphEdgeMapObject(GraphEdgeMapObject):
     @abc.abstractmethod
     def right_boundary(self) -> PolylineMapObject:
         """
-        Getter function for obtaining the right boundary of the lane.
-        :return: Right boundary of the lane.
+        获取车道的右边界。
+        :return: 车道右侧边界。
         """
         pass
 
@@ -132,179 +131,177 @@ class LaneGraphEdgeMapObject(GraphEdgeMapObject):
     @abc.abstractmethod
     def speed_limit_mps(self) -> Optional[float]:
         """
-        Getter function for obtaining the speed limit of the lane.
-        :return: [m/s] Speed limit.
+        获取车道的速度限制。
+        :return: [m/s] 速度限制值，如果没有定义则返回 None。
         """
         pass
 
     @abc.abstractmethod
     def get_roadblock_id(self) -> str:
         """
-        Getter function for obtaining the roadblock id containing the lane.
-        :return: Roadblock ID containing the lane.
+        获取包含该车道的道路块 ID。
+        :return: 包含车道的道路块 ID。
         """
         pass
 
     @abc.abstractmethod
     def parent(self) -> RoadBlockGraphEdgeMapObject:
         """
-        Getter function for obtaining the parent RoadBlockGraphEdgeMapObject containing the LaneGraphEdgeMapObject.
-        :return: RoadblockBlockGraphEdgeMapObject containing the LaneGraphEdgeMapObject.
+        获取包含该车道的父级道路块对象。
+        :return: RoadBlockGraphEdgeMapObject 类型的对象。
         """
         pass
 
     @abc.abstractmethod
     def has_traffic_lights(self) -> bool:
         """
-        Returns whether this graph edge is controlled by traffic lights.
-        :return: True if the edge is controlled by traffic lights. False otherwise.
+        判断该边是否受交通信号灯控制。
+        :return: 如果受控制返回 True，否则返回 False。
         """
         pass
 
     @property
     @abc.abstractmethod
-    def stop_lines(self) -> List[StopLine]:
+    def stop_lines(self) -> List['StopLine']:
         """
-        Returns a list of stop lines associated with this lane connector.
-        :return: A list of stop lines associated with this lane connector.
+        获取与该车道关联的所有停止线。
+        :return: StopLine 的列表。
         """
         pass
 
-    def is_same_roadblock(self, other: Lane) -> bool:
+    def is_same_roadblock(self, other: 'Lane') -> bool:
         """
-        :param other: Lane to check if it is in the same roadblock as self.
-        :return: True if lanes are in the same roadblock.
+        判断另一个车道是否和当前车道处于同一个道路块。
+        :param other: 待比较的车道。
+        :return: 如果处于同一道路块返回 True。
         """
         return self.get_roadblock_id() == other.get_roadblock_id()
 
-    def is_adjacent_to(self, other: Lane) -> bool:
+    def is_adjacent_to(self, other: 'Lane') -> bool:
         """
-        :param other: Lane to check if it is adjacent to self.
-        :return: True if self and other are in the same roadblock and adjacent.
+        判断另一个车道是否和当前车道相邻。
+        :param other: 待比较的车道。
+        :return: 如果相邻返回 True。
         """
-        # Due to lack of lane connector adjacency information, lane connector boundaries do not align so this is always False
         return self.is_same_roadblock(other) and (
             self.right_boundary.id == other.left_boundary.id or self.left_boundary.id == other.right_boundary.id
         )
 
     @abc.abstractmethod
-    def is_left_of(self, other: Lane) -> bool:
+    def is_left_of(self, other: 'Lane') -> bool:
         """
-        :param other: Lane to check if self is left of.
-        :return: True if self and other are in the same RoadBlock and self is anywhere to the left of other.
-        :raise AssertionError: if lanes are not in the same RoadBlock.
+        判断当前车道是否在指定车道的左侧。
+        :param other: 被比较的车道。
+        :return: 如果是左侧返回 True。
+        :raise AssertionError: 如果车道不在同一道路块中抛出异常。
         """
         pass
 
     @abc.abstractmethod
-    def is_right_of(self, other: Lane) -> bool:
+    def is_right_of(self, other: 'Lane') -> bool:
         """
-        :param other: Lane to check if self is right of.
-        :return: True if self and other are in the same RoadBlock and self is anywhere to the right of other.
-        :raise AssertionError: if lanes are not in the same RoadBlock.
+        判断当前车道是否在指定车道的右侧。
+        :param other: 被比较的车道。
+        :return: 如果是右侧返回 True。
+        :raise AssertionError: 如果车道不在同一道路块中抛出异常。
         """
         pass
 
     @property
     @abc.abstractmethod
-    def adjacent_edges(self) -> Tuple[Optional[LaneGraphEdgeMapObject], Optional[LaneGraphEdgeMapObject]]:
+    def adjacent_edges(self) -> Tuple[Optional['LaneGraphEdgeMapObject'], Optional['LaneGraphEdgeMapObject']]:
         """
-        Gets adjacent LaneGraphEdgeMapObjects.
-        :return: Tuple of adjacent LaneGraphEdgeMapObjects where first element is the left lane and the second element is the right lane.
+        获取相邻的车道边。
+        :return: 元组 (左侧车道, 右侧车道)。
         """
         pass
 
     @abc.abstractmethod
     def get_width_left_right(self, point: Point2D, include_outside: bool = False) -> Tuple[float, float]:
         """
-        Gets distance to left and right sides of the lane from point.
-        :param point: Point in global frame.
-        :param include_outside: Allow point to be outside of lane.
-        :return: The distance to left and right sides of the lane. If the query is invalid, inf is returned.
-            If point is outside the LaneGraphEdgeMapObject and cannot be projected onto the LaneGraphEdgeMapObject and
-            include_outside is True then the distance to the edge on the nearest end is returned.
+        获取从给定点到车道左右边界的距离。
+        :param point: 点坐标。
+        :param include_outside: 是否允许点在车道外。
+        :return: 左右两侧的距离。
         """
         pass
 
     @abc.abstractmethod
     def oriented_distance(self, point: Point2D) -> float:
         """
-        Calculate the distance between the edge and a point with an oriented distance.
-        :param point: Point global frame.
-        :return: The distance between the edge and a point with an oriented distance. If the point is outside of the interval of
-            the LaneGraphEdgeMapObject then the L1 distance to the nearest end is returned. The distance is positive if the
-            point is on the left side of the line, while it is negative if the point is on the right side of the line.
+        计算点相对于边的定向距离。
+        :param point: 点坐标。
+        :return: 距离值。正数代表左侧，负数代表右侧。
         """
         pass
 
 
 class Lane(LaneGraphEdgeMapObject):
     """
-    Class representing lanes.
+    表示车道的类。
     """
 
     def __init__(self, lane_id: str):
         """
-        Constructor of the base lane type.
-        :param lane_id: unique identifier of the lane.
+        构造函数。
+        :param lane_id: 车道的唯一标识符。
         """
         super().__init__(lane_id)
 
     def has_traffic_lights(self) -> bool:
-        """Inherited from superclass."""
+        """继承自父类方法。"""
         return False
 
     @property
-    def stop_lines(self) -> List[StopLine]:
-        """Inherited from superclass."""
+    def stop_lines(self) -> List['StopLine']:
+        """继承自父类方法。"""
         return []
 
     @abc.abstractmethod
     def index(self) -> int:
         """
-        Gets the 1-index position of the lane within the parent roadblock.
-        :return: The index of lane.
+        获取车道在其父级道路块中的索引位置（从1开始计数）。
+        :return: 车道索引。
         """
         pass
 
 
 class LaneConnector(LaneGraphEdgeMapObject):
     """
-    Class representing lane connectors.
+    表示车道连接器的类。
     """
 
     def __init__(self, lane_connector_id: str):
         """
-        Constructor of the base lane connector type.
-        :param lane_connector_id: unique identifier of the lane.
+        构造函数。
+        :param lane_connector_id: 车道连接器的唯一标识符。
         """
         super().__init__(lane_connector_id)
 
     @property
-    def adjacent_edges(self) -> Tuple[Optional[LaneGraphEdgeMapObject], Optional[LaneGraphEdgeMapObject]]:
-        """Inherited from superclass."""
-        # Returns None for both elements since we currently don't have a way of telling if two lane connectors are adjacent
+    def adjacent_edges(self) -> Tuple[Optional['LaneGraphEdgeMapObject'], Optional['LaneGraphEdgeMapObject']]:
+        """继承自父类方法。"""
         return None, None
 
     @property
     @abc.abstractmethod
     def turn_type(self) -> LaneConnectorType:
         """
-        Gets the turn type of the lane connector
-        :return: LaneConnectorType of lane connector if lane connector has a type else None
+        获取车道连接器的转向类型。
+        :return: 转向类型或 None。
         """
         pass
 
 
 class PolylineMapObject(AbstractMapObject):
     """
-    A class to represent any map object that can be represented as a polyline.
+    表示可由折线描述的地图对象。
     """
 
     def __init__(self, path_id: str):
         """
-        Constructor of the PolylineMapObject type.
-        :param path_id: unique identifier of the polyline.
+        构造函数。
+        :param path_id: 折线的唯一标识符。
         """
         super().__init__(path_id)
 
@@ -312,8 +309,8 @@ class PolylineMapObject(AbstractMapObject):
     @abc.abstractmethod
     def linestring(self) -> LineString:
         """
-        Returns the polyline as a Linestring.
-        :return: The polyline as a Linestring.
+        获取折线的 Linestring 表示。
+        :return: Linestring 对象。
         """
         pass
 
@@ -321,8 +318,8 @@ class PolylineMapObject(AbstractMapObject):
     @abc.abstractmethod
     def length(self) -> float:
         """
-        Returns the length of the polyline [m].
-        :return: the length of the polyline.
+        获取折线的长度。
+        :return: [m] 长度值。
         """
         pass
 
@@ -330,68 +327,67 @@ class PolylineMapObject(AbstractMapObject):
     @abc.abstractmethod
     def discrete_path(self) -> List[StateSE2]:
         """
-        Gets a discretized representation of the polyline.
-        :return: a list of StateSE2.
+        获取折线的离散化路径表示。
+        :return: StateSE2 对象的列表。
         """
         pass
 
     @abc.abstractmethod
     def get_nearest_arc_length_from_position(self, point: Point2D) -> float:
         """
-        Returns the arc length along the polyline where the given point is the closest.
-        :param point: [m] x, y coordinates in global frame.
-        :return: [m] arc length along the polyline.
+        获取离给定位置最近的弧长。
+        :param point: [m] 点坐标。
+        :return: [m] 弧长值。
         """
         pass
 
     @abc.abstractmethod
     def get_nearest_pose_from_position(self, point: Point2D) -> StateSE2:
         """
-        Returns the pose along the polyline where the given point is the closest.
-        :param point: [m] x, y coordinates in global frame.
-        :return: nearest pose along the polyline as StateSE2.
+        获取离给定位置最近的位姿。
+        :param point: [m] 点坐标。
+        :return: 最近的位姿。
         """
         pass
 
     @abc.abstractmethod
     def get_curvature_at_arc_length(self, arc_length: float) -> float:
         """
-        Return curvature at an arc length along the polyline.
-        :param arc_length: [m] arc length along the polyline. It has to be 0<= arc_length <=length.
-        :return: [1/m] curvature along a polyline.
+        获取折线上某弧长处的曲率。
+        :param arc_length: [m] 弧长值。
+        :return: [1/m] 曲率值。
         """
         pass
 
     def get_nearest_curvature_from_position(self, point: Point2D) -> float:
         """
-        Returns the curvature along the polyline where the given point is the closest.
-        :param point: [m] x, y coordinates in global frame.
-        :return: [1/m] curvature along a polyline.
+        获取离给定位置最近的曲率值。
+        :param point: [m] 点坐标。
+        :return: [1/m] 曲率值。
         """
         return self.get_curvature_at_arc_length(self.get_nearest_arc_length_from_position(point))
 
 
 class RoadBlockGraphEdgeMapObject(GraphEdgeMapObject):
     """
-    A class to represent a map object that can be an edge as a part of the map graph connectivity and contains
-    instances of LaneGraphEdgeMapObject within it.
+    表示可以作为地图图结构的一部分、并且包含多个 LaneGraphEdgeMapObject 的地图对象。
     """
 
     @property
     @abc.abstractmethod
-    def incoming_edges(self) -> List[RoadBlockGraphEdgeMapObject]:  # type: ignore
+    def incoming_edges(self) -> List['RoadBlockGraphEdgeMapObject']:  # type: ignore
         """
-        Returns incoming edges connecting to this edge.
-        :return: a list of RoadBlockGraphEdgeMapObject.
+        获取连接到此边的入边。
+        :return: RoadBlockGraphEdgeMapObject 的列表。
         """
         pass
 
     @property
     @abc.abstractmethod
-    def outgoing_edges(self) -> List[RoadBlockGraphEdgeMapObject]:  # type: ignore
+    def outgoing_edges(self) -> List['RoadBlockGraphEdgeMapObject']:  # type: ignore
         """
-        Returns outgoing edges from this edge.
-        :return: a list of RoadBlockGraphEdgeMapObject.
+        获取从此边出发的出边。
+        :return: RoadBlockGraphEdgeMapObject 的列表。
         """
         pass
 
@@ -399,47 +395,48 @@ class RoadBlockGraphEdgeMapObject(GraphEdgeMapObject):
     @abc.abstractmethod
     def interior_edges(self) -> List[LaneGraphEdgeMapObject]:
         """
-        Returns LaneGraphEdgeMapObject edges that comprise this container edge.
-        :return: a list of LaneGraphEdgeMapObject.
+        获取组成该容器边的边缘。
+        :return: LaneGraphEdgeMapObject 的列表。
         """
         pass
 
     @property
     @abc.abstractmethod
-    def children_stop_lines(self) -> List[StopLine]:
+    def children_stop_lines(self) -> List['StopLine']:
         """
-        Returns StopLines within this RoadBlockGraphEdgeMapObject.
-        :return: a list of StopLines.
+        获取该道路块内的所有停止线。
+        :return: StopLine 的列表。
         """
         pass
 
-    def intersection(self) -> Optional[Intersection]:
+    def intersection(self) -> Optional['Intersection']:
         """
-        :return: The intersection parent to the RoadBlockGraphEdgeMapObject, if available.
+        获取该道路块对应的交叉路口（如果存在）。
+        :return: Intersection 对象或 None。
         """
         pass
 
 
 class StopLine(PolygonMapObject):
     """
-    Class representing stop lines.
+    表示停止线的类。
     """
 
     def __init__(self, stop_line_id: str, stop_line_type: StopLineType) -> None:
         """
-        Constructor of the base stop line type.
-        :param stop_line_id: unique identifier of the stop line.
-        :param stop_line_type: stop line sub type. E.g. PED_CROSSING, STOP_SIGN, TRAFFIC_LIGHT, TURN_STOP.
+        构造函数。
+        :param stop_line_id: 停止线的唯一标识符。
+        :param stop_line_type: 停止线子类型，如 PED_CROSSING、STOP_SIGN、TRAFFIC_LIGHT 等。
         """
         super().__init__(stop_line_id)
         self.stop_line_type = stop_line_type
 
     @property
     @abc.abstractmethod
-    def intersection_from(self) -> Intersection:
+    def intersection_from(self) -> 'Intersection':
         """
-        Gets the related intersection.
-        :return: Intersection related to StopLine.
+        获取相关的交叉路口。
+        :return: 关联的 Intersection 对象。
         """
         pass
 
@@ -447,8 +444,8 @@ class StopLine(PolygonMapObject):
     @abc.abstractmethod
     def layer_type(self) -> StopLineType:
         """
-        Gets StopLineType for Stopline subtype.
-        :return: StopLineType subtype.
+        获取停止线的类型。
+        :return: StopLineType 类型。
         """
         pass
 
@@ -456,22 +453,22 @@ class StopLine(PolygonMapObject):
     @abc.abstractmethod
     def parent(self) -> RoadBlockGraphEdgeMapObject:
         """
-        Getter function for obtaining the parent RoadBlockGraphEdgeMapObject containing the StopLine.
-        :return: RoadblockBlockGraphEdgeMapObject containing the StopLine.
+        获取包含该停止线的父级 RoadBlockGraphEdgeMapObject。
+        :return: 父级 RoadBlockGraphEdgeMapObject。
         """
         pass
 
 
 class Intersection(PolygonMapObject):
     """
-    Class representing intersections.
+    表示交叉路口的类。
     """
 
     def __init__(self, intersection_id: str, intersection_type: IntersectionType) -> None:
         """
-        Constructor of the base intersection type.
-        :param intersection_id: unique identifier of the intersection.
-        :param intersection_type: stop line sub type. E.g. DEFAULT, TRAFFIC_LIGHT, STOP_SIGN.
+        构造函数。
+        :param intersection_id: 交叉路口的唯一标识符。
+        :param intersection_type: 交叉路口类型，如 DEFAULT、TRAFFIC_LIGHT、STOP_SIGN 等。
         """
         super().__init__(intersection_id)
         self.intersection_type = intersection_type
@@ -480,8 +477,8 @@ class Intersection(PolygonMapObject):
     @abc.abstractmethod
     def interior_edges(self) -> List[RoadBlockGraphEdgeMapObject]:
         """
-        Returns RoadBlockGraphEdgeMapObjects contained within the intersection.
-        :return: a list of RoadBlockGraphEdgeMapObject.
+        获取交叉路口内包含的 RoadBlockGraphEdgeMapObject。
+        :return: RoadBlockGraphEdgeMapObject 列表。
         """
         pass
 
@@ -489,8 +486,8 @@ class Intersection(PolygonMapObject):
     @abc.abstractmethod
     def incoming_edges(self) -> List[Lane]:
         """
-        Returns incoming Lanes connecting to this intersection.
-        :return: a list of Lane.
+        获取连接到该交叉路口的车道。
+        :return: Lane 对象列表。
         """
         pass
 
@@ -498,7 +495,7 @@ class Intersection(PolygonMapObject):
     @abc.abstractmethod
     def is_signaled(self) -> bool:
         """
-        Returns if intersection is signaled.
-        :return: True if intersection is a traffic light or one of the interior edges has a traffic light is signaled else False.
+        判断交叉路口是否有信号控制。
+        :return: 如果是信号控制路口返回 True，否则返回 False。
         """
         pass

@@ -28,15 +28,14 @@ from nuplan.database.utils.label.utils import local2agent_type, raw_mapping
 
 def _parse_tracked_object_row(row: sqlite3.Row) -> TrackedObject:
     """
-    A convenience method to parse a TrackedObject from a sqlite3 row.
-    :param row: The row from the DB query.
-    :return: The parsed TrackedObject.
+    从 sqlite3 行解析一个 TrackedObject。
+    :param row: 数据库查询返回的一行数据。
+    :return: 解析后的 TrackedObject。
     """
     category_name = row["category_name"]
     pose = StateSE2(row["x"], row["y"], row["yaw"])
     oriented_box = OrientedBox(pose, width=row["width"], length=row["length"], height=row["height"])
 
-    # These next two are globals
     label_local = raw_mapping["global2local"][category_name]
     tracked_object_type = TrackedObjectType[local2agent_type[label_local]]
 
@@ -45,7 +44,7 @@ def _parse_tracked_object_row(row: sqlite3.Row) -> TrackedObject:
             tracked_object_type=tracked_object_type,
             oriented_box=oriented_box,
             velocity=StateVector2D(row["vx"], row["vy"]),
-            predictions=[],  # to be filled in later
+            predictions=[],  # 后续填充
             angular_velocity=np.nan,
             metadata=SceneObjectMetadata(
                 token=row["token"].hex(),
@@ -71,18 +70,18 @@ def _parse_tracked_object_row(row: sqlite3.Row) -> TrackedObject:
 
 def get_sensor_token_by_index_from_db(log_file: str, sensor_source: SensorDataSource, index: int) -> Optional[str]:
     """
-    Get the N-th sensor token ordered chronologically by timestamp from a particular channel.
-    This is primarily used for unit testing.
-    If the index does not exist (e.g. index = 10,000 in a log file with 1000 entries),
-        then the result will be None.
-    Only non-negative integer indexes are supported.
-    :param log_file: The db file to query.
-    :param sensor_source: Parameters for querying the correct table.
-    :param index: The 0-indexed integer index of the lidarpc token to retrieve.
-    :return: The token, if it exists.
+    根据时间戳顺序获取第 N 个传感器 token。
+    主要用于单元测试。如果索引不存在（如 index=10000 但只有 1000 条记录），则返回 None。
+    只支持非负整数索引。
+
+    :param log_file: 要查询的数据库文件。
+    :param sensor_source: 查询目标表的参数。
+    :param index: lidarpc token 的 0-indexed 索引。
+    :return: 如果存在则返回 token。
     """
     if index < 0:
-        raise ValueError(f"Index of {index} was supplied to get_lidarpc_token_by_index_from_db(), which is negative.")
+        raise ValueError(f"传入了负索引 {index} 给 get_lidarpc_token_by_index_from_db()。")
+
     sensor_token = get_sensor_token(log_file, sensor_source.sensor_table, sensor_source.channel)
 
     query = f"""
@@ -105,10 +104,10 @@ def get_sensor_token_by_index_from_db(log_file: str, sensor_source: SensorDataSo
 
 def get_end_sensor_time_from_db(log_file: str, sensor_source: SensorDataSource) -> int:
     """
-    Get the timestamp of the last sensor data recorded in the log file.
-    :param log_file: The db file to query.
-    :param sensor_source: Parameters for querying the correct table.
-    :return: The timestamp of the last sensor data.
+    获取日志文件中最后一条传感器数据的时间戳。
+    :param log_file: 要查询的数据库文件。
+    :param sensor_source: 查询目标表的参数。
+    :return: 最后一条传感器数据的时间戳。
     """
     query = f"""
     SELECT MAX(timestamp) AS max_time
@@ -123,11 +122,11 @@ def get_sensor_data_token_timestamp_from_db(
     log_file: str, sensor_source: SensorDataSource, token: str
 ) -> Optional[int]:
     """
-    Get the timestamp associated with an individual lidar_pc token.
-    :param log_file: The db file to query.
-    :param sensor_source: Parameters for querying the correct table.
-    :param token: The token for which to grab the timestamp.
-    :return: The timestamp associated with the token, if found.
+    获取指定 lidar_pc token 对应的时间戳。
+    :param log_file: 要查询的数据库文件。
+    :param sensor_source: 查询目标表的参数。
+    :param token: 要查询时间戳的 token。
+    :return: 如果找到则返回对应时间戳。
     """
     query = f"""
     SELECT timestamp
@@ -140,11 +139,11 @@ def get_sensor_data_token_timestamp_from_db(
 
 def get_sensor_token_map_name_from_db(log_file: str, sensor_source: SensorDataSource, token: str) -> Optional[str]:
     """
-    Get the map name for a provided sensor token.
-    :param log_file: The db file to query.
-    :param sensor_source: Parameters for querying the correct table.
-    :param token: The token for which to get the map name.
-    :return: The map name for the token, if found.
+    获取指定传感器 token 所属的地图名称。
+    :param log_file: 要查询的数据库文件。
+    :param sensor_source: 查询目标表的参数。
+    :param token: 要查询地图名称的 token。
+    :return: 如果找到则返回地图名称。
     """
     query = f"""
     SELECT map_version
@@ -164,9 +163,10 @@ def get_sampled_sensor_tokens_in_time_window_from_db(
     log_file: str, sensor_source: SensorDataSource, start_timestamp: int, end_timestamp: int, subsample_interval: int
 ) -> Generator[str, None, None]:
     """
-    For every token in a window defined by [start_timestamp, end_timestamp], retrieve every `subsample_interval`-th sensor token, ordered in increasing order by timestamp.
+    在给定时间窗口 [start_timestamp, end_timestamp] 内，按 subsample_interval 间隔采样传感器 token。
+    返回的 token 按时间升序排列。
 
-    E.g. for this table
+    示例：
     ```
     token | timestamp
     -----------------
@@ -179,15 +179,15 @@ def get_sampled_sensor_tokens_in_time_window_from_db(
     7     | 6
     ```
 
-    query with start_timestamp=1, end_timestamp=5, subsample_interval=2, table=lidar_pc, will return tokens
-    [1, 3, 5].
+    若调用时 start_timestamp=1, end_timestamp=5, subsample_interval=2，
+    将返回 tokens [1, 3, 5]。
 
-    :param log_file: The db file to query.
-    :param sensor_source: Parameters for querying the correct table.
-    :param start_timestamp: The start of the window to sample, inclusive.
-    :param end_timestamp: The end of the window to sample, inclusive.
-    :param subsample_interval: The interval at which to sample.
-    :return: A generator of lidar_pc tokens that fit the provided parameters.
+    :param log_file: 要查询的数据库文件。
+    :param sensor_source: 查询目标表的参数。
+    :param start_timestamp: 时间窗口起始时间（包含）。
+    :param end_timestamp: 时间窗口结束时间（包含）。
+    :param subsample_interval: 采样间隔。
+    :return: 符合条件的 lidar_pc token 生成器。
     """
     sensor_token = get_sensor_token(log_file, sensor_source.sensor_table, sensor_source.channel)
 
@@ -205,6 +205,7 @@ def get_sampled_sensor_tokens_in_time_window_from_db(
     WHERE ((row_num - 1) % ?) = 0
     ORDER BY timestamp ASC;
     """
+
     for row in execute_many(
         query, (start_timestamp, end_timestamp, bytearray.fromhex(sensor_token), subsample_interval), log_file
     ):
@@ -218,13 +219,14 @@ def get_sensor_data_from_sensor_data_tokens_from_db(
     tokens: Union[Generator[str, None, None], List[str]],
 ) -> Generator[SensorDataTableRow, None, None]:
     """
-    Given a collection of sensor tokens, builds the corresponding sensor_class objects.
-    This function makes no restrictions on the ordering of returned values.
-    :param sensor_source: Parameters for querying the correct table.
-    :param sensor_class: Class holding a row of the SensorData table.
-    :param log_file: The db file to query.
-    :param tokens: The tokens for which to build the sensor_class objects.
-    :return: A generator yielding sensor_class objects.
+    给定一组传感器 token，构建对应的 sensor_class 实例。
+    此函数对返回值排序无要求。
+    
+    :param sensor_source: 查询目标表的参数。
+    :param sensor_class: SensorData 表中的行类。
+    :param log_file: 要查询的数据库文件。
+    :param tokens: 要构建对象的 token 列表或生成器。
+    :return: sensor_class 对象的生成器。
     """
     if not isinstance(tokens, list):
         tokens = list(tokens)
@@ -243,11 +245,11 @@ def get_sensor_transform_matrix_for_sensor_data_token_from_db(
     log_file: str, sensor_source: SensorDataSource, sensor_data_token: str
 ) -> Optional[Transform]:
     """
-    Get the associated lidar transform matrix from the DB for the given lidarpc_token.
-    :param log_file: The log file to query.
-    :param sensor_source: Parameters for querying the correct table.
-    :param sensor_data_token: The sensor data token to query.
-    :return: The transform matrix. Reuturns None if the matrix does not exist in the DB (e.g. for a token that does not exist).
+    获取指定 lidarpc_token 对应的变换矩阵。
+    :param log_file: 要查询的日志文件。
+    :param sensor_source: 查询目标表的参数。
+    :param sensor_data_token: 要查询的传感器数据 token。
+    :return: 变换矩阵；若不存在则返回 None。
     """
     query = f"""
         SELECT  sensor.translation,
@@ -275,11 +277,11 @@ def get_mission_goal_for_sensor_data_token_from_db(
     log_file: str, sensor_source: SensorDataSource, token: str
 ) -> Optional[StateSE2]:
     """
-    Get the goal pose for a given lidar_pc token.
-    :param log_file: The db file to query.
-    :param sensor_source: Parameters for querying the correct table.
-    :param token: The token for which to query the goal state.
-    :return: The goal state.
+    获取指定 lidar_pc token 对应的目标姿态。
+    :param log_file: 要查询的日志文件。
+    :param sensor_source: 查询目标表的参数。
+    :param token: 要查询目标状态的 token。
+    :return: 目标状态。
     """
     query = f"""
         SELECT  ep.x,
@@ -306,10 +308,10 @@ def get_mission_goal_for_sensor_data_token_from_db(
 
 def get_roadblock_ids_for_lidarpc_token_from_db(log_file: str, lidarpc_token: str) -> Optional[List[str]]:
     """
-    Get the scene roadblock ids from the db for a given lidar_pc token.
-    :param log_file: The db file to query.
-    :param lidarpc_token: The token for which to query the current state.
-    :return: List of roadblock ids as str.
+    获取指定 lidar_pc token 对应的场景 roadblock IDs。
+    :param log_file: 要查询的数据库文件。
+    :param lidarpc_token: 要查询当前状态的 token。
+    :return: 字符串格式的 roadblock ID 列表。
     """
     query = """
         SELECT  s.roadblock_ids
@@ -318,7 +320,6 @@ def get_roadblock_ids_for_lidarpc_token_from_db(log_file: str, lidarpc_token: st
             ON lp.scene_token = s.token
         WHERE lp.token = ?
     """
-    # Each row is a space-separated list of route roadblock IDS, e.g. "123 234 345"
     row = execute_one(query, (bytearray.fromhex(lidarpc_token),), log_file)
     if row is None:
         return None
@@ -327,10 +328,10 @@ def get_roadblock_ids_for_lidarpc_token_from_db(log_file: str, lidarpc_token: st
 
 def get_statese2_for_lidarpc_token_from_db(log_file: str, token: str) -> Optional[StateSE2]:
     """
-    Get the ego pose as a StateSE2 from the db for a given lidar_pc token.
-    :param log_file: The db file to query.
-    :param token: The token for which to query the current state.
-    :return: The current ego state, as a StateSE2 object.
+    从数据库中根据 lidar_pc token 获取自车姿态（StateSE2）。
+    :param log_file: 要查询的数据库文件。
+    :param token: 要查询当前状态的 token。
+    :return: 当前自车状态（StateSE2）。
     """
     query = """
         SELECT  ep.x,
@@ -361,11 +362,10 @@ def get_sampled_lidarpcs_from_db(
     future: bool,
 ) -> Generator[LidarPc, None, None]:
     """
-    Given an anchor token, return the tokens of either the previous or future tokens, sampled by the provided indexes.
+    给定一个初始 token，返回过去或未来的 token，并按照提供的索引进行采样。
+    结果始终按时间戳升序排列。
 
-    The result is always sorted by timestamp ascending.
-
-    For example, given the following table:
+    示例：
     token | timestamp
     -----------------
     0     | 0
@@ -380,7 +380,7 @@ def get_sampled_lidarpcs_from_db(
     9     | 9
     10    | 10
 
-    Some sample results:
+    示例结果：
     initial token | sample_indexes | future | returned tokens
     ---------------------------------------------------------
     5             | [0, 1, 2]      | True   | [5, 6, 7]
@@ -388,12 +388,11 @@ def get_sampled_lidarpcs_from_db(
     7             | [0, 3, 12]     | False  | [4, 7]
     0             | [11]           | True   | []
 
-    :param log_file: The db file to query.
-    :param initial_token: The token on which to base the query.
-    :param sensor_source: Parameters for querying the correct table.
-    :param sample_indexes: The indexes for which to sample.
-    :param future: If true, the indexes represent future times. If false, they represent previous times.
-    :return: A generator of LidarPC objects representing the requested indexes
+    :param log_file: 要查询的数据库文件。
+    :param initial_token: 查询基准 token。
+    :param sample_indexes: 采样索引列表。
+    :param future: 如果为 True，则表示未来 token；否则为过去 token。
+    :return: 请求的 LidarPC 对象生成器。
     """
     if not isinstance(sample_indexes, list):
         sample_indexes = list(sample_indexes)
@@ -424,7 +423,7 @@ def get_sampled_lidarpcs_from_db(
             FROM lidar_pc AS lp
             CROSS JOIN initial_lidarpc AS il
             WHERE   lp.timestamp {order_cmp} il.timestamp
-            AND lp.lidar_token = ?
+            AND lidar_token = ?
         )
         SELECT  token,
                 next_token,
@@ -435,10 +434,7 @@ def get_sampled_lidarpcs_from_db(
                 filename,
                 timestamp
         FROM ordered
-
-        -- ROW_NUMBER() starts at 1, where consumers will expect sample_indexes to be 0-indexed
         WHERE (row_num - 1) IN ({('?,'*len(sample_indexes))[:-1]})
-
         ORDER BY timestamp ASC;
     """
 
@@ -455,38 +451,16 @@ def get_sampled_ego_states_from_db(
     future: bool,
 ) -> Generator[EgoState, None, None]:
     """
-    Given an anchor token, retrieve the ego states associated with tokens order by time, sampled by the provided indexes.
+    给定一个初始 token，返回按时间排序的自车状态，按提供索引采样。
+    结果始终按时间戳升序排列。
 
-    The result is always sorted by timestamp ascending.
+    示例：同上。
 
-    For example, given the following table:
-    token | timestamp | ego_state
-    -----------------------------
-    0     | 0         | A
-    1     | 1         | B
-    2     | 2         | C
-    3     | 3         | D
-    4     | 4         | E
-    5     | 5         | F
-    6     | 6         | G
-    7     | 7         | H
-    8     | 8         | I
-    9     | 9         | J
-    10    | 10        | K
-
-    Some sample results:
-    initial token | sample_indexes | future | returned states
-    ---------------------------------------------------------
-    5             | [0, 1, 2]      | True   | [F, G, H]
-    5             | [0, 1, 2]      | False  | [D, E, F]
-    7             | [0, 3, 12]     | False  | [E, H]
-    0             | [11]           | True   | []
-
-    :param log_file: The db file to query.
-    :param initial_token: The token on which to base the query.
-    :param sample_indexes: The indexes for which to sample.
-    :param future: If true, the indexes represent future times. If false, they represent previous times.
-    :return: A generator of EgoState objects associated with the given LidarPCs.
+    :param log_file: 要查询的数据库文件。
+    :param initial_token: 查询基准 token。
+    :param sample_indexes: 采样索引。
+    :param future: 如果为 True 表示未来，否则表示过去。
+    :return: 自车状态生成器。
     """
     if not isinstance(sample_indexes, list):
         sample_indexes = list(sample_indexes)
@@ -496,7 +470,6 @@ def get_sampled_ego_states_from_db(
     order_direction = "ASC" if future else "DESC"
     order_cmp = ">=" if future else "<="
 
-    # TODO: We can remove dependency from lidar_pc if instead of accessing lp.scene_token we do a join on ego_pose
     query = f"""
         WITH initial_lidarpc AS
         (
@@ -526,8 +499,6 @@ def get_sampled_ego_states_from_db(
                 ep.qx,
                 ep.qy,
                 ep.qz,
-                -- ego_pose and lidar_pc timestamps are not the same, even when linked by token!
-                -- use the lidar_pc timestamp for compatibility with older code.
                 o.timestamp,
                 ep.vx,
                 ep.vy,
@@ -536,10 +507,7 @@ def get_sampled_ego_states_from_db(
         FROM ego_pose AS ep
         INNER JOIN ordered AS o
             ON o.ego_pose_token = ep.token
-
-        -- ROW_NUMBER() starts at 1, where consumers will expect sample_indexes to be 0-indexed
         WHERE (o.row_num - 1) IN ({('?,'*len(sample_indexes))[:-1]})
-
         ORDER BY o.timestamp ASC;
     """
 
@@ -558,11 +526,11 @@ def get_sampled_ego_states_from_db(
 
 def get_ego_state_for_lidarpc_token_from_db(log_file: str, token: str) -> EgoState:
     """
-    Get the ego state associated with an individual lidar_pc token from the db.
+    从数据库中获取与指定 lidar_pc token 关联的自车状态。
 
-    :param log_file: The log file to query.
-    :param token: The lidar_pc token to query.
-    :return: The EgoState associated with the LidarPC.
+    :param log_file: 要查询的日志文件。
+    :param token: 要查询的 lidar_pc token。
+    :return: 与 LidarPC 关联的 EgoState。
     """
     query = """
         SELECT  ep.x,
@@ -571,8 +539,6 @@ def get_ego_state_for_lidarpc_token_from_db(log_file: str, token: str) -> EgoSta
                 ep.qx,
                 ep.qy,
                 ep.qz,
-                -- ego_pose and lidar_pc timestamps are not the same, even when linked by token!
-                -- use lidar_pc timestamp for backwards compatibility.
                 lp.timestamp,
                 ep.vx,
                 ep.vy,
@@ -603,10 +569,10 @@ def get_traffic_light_status_for_lidarpc_token_from_db(
     log_file: str, token: str
 ) -> Generator[TrafficLightStatusData, None, None]:
     """
-    Get the traffic light information associated with a given lidar_pc.
-    :param log_file: The log file to query.
-    :param token: The lidar_pc token for which to obtain the traffic light information.
-    :return: The traffic light status data associated with the given lidar_pc.
+    获取与指定 lidar_pc token 关联的交通灯状态。
+    :param log_file: 要查询的日志文件。
+    :param token: lidar_pc token。
+    :return: 与 lidar_pc 关联的交通灯状态数据。
     """
     query = """
         SELECT  CASE WHEN tl.status == "green" THEN 0
@@ -634,20 +600,20 @@ def get_tracked_objects_within_time_interval_from_db(
     log_file: str, start_timestamp: int, end_timestamp: int, filter_track_tokens: Optional[Set[str]] = None
 ) -> Generator[TrackedObject, None, None]:
     """
-    Gets all of the tracked objects between the provided timestamps, inclusive.
-    Optionally filters on a user-provided set of track tokens.
+    获取在指定时间区间内的所有追踪对象（包括 agent 和 static object）。
+    可选地根据 track_token 进行过滤。
 
-    This query will not obtain the future waypoints.
-    For that, call `get_future_waypoints_for_agents_from_db()`
-    with the tokens of the agents of interest.
+    不会获取 agent 的未来路径点。
+    如需未来路径点，请调用 [get_future_waypoints_for_agents_from_db()]
+    (file:///home/mark/nuplan-devkit/nuplan/database/nuplan_db/nuplan_scenario_queries.py#L732-L777)。
 
-    :param log_file: The log file to query.
-    :param start_timestamp: The starting timestamp for which to query, in uS.
-    :param end_timestamp: The ending timestamp for which to query, in uS.
-    :param filter_track_tokens: If provided, only agents with `track_tokens` present in the provided set will be returned.
-      If not provided, then all agents present at every time stamp will be returned.
-    :return: A generator of TrackedObjects, sorted by TimeStamp, then TrackedObject.
+    :param log_file: {log_file} 文件。
+    :param start_timestamp: 查询开始时间戳 [us]。
+    :param end_timestamp: 查询结束时间戳 [us]。
+    :param filter_track_tokens: 如果提供，则只返回这些 track_token 的对象。
+    :return: TrackedObjects 生成器，按时间戳和 track_token 排序。
     """
+
     args: List[Union[int, bytearray]] = [start_timestamp, end_timestamp]
 
     filter_clause = ""
@@ -690,17 +656,16 @@ def get_tracked_objects_within_time_interval_from_db(
 
 def get_tracked_objects_for_lidarpc_token_from_db(log_file: str, token: str) -> Generator[TrackedObject, None, None]:
     """
-    Get all tracked objects for a given lidar_pc.
-    This includes both agents and static objects.
-    The values are returned in random order.
+    获取指定 lidar_pc 的所有追踪对象。
+    包括 agent 和静态对象。
+    返回结果是无序的。
 
-    For agents, this query will not obtain the future waypoints.
-    For that, call `get_future_waypoints_for_agents_from_db()`
-        with the tokens of the agents of interest.
+    对于 agent，此查询不会获取未来路径点。
+    如需未来路径点，请调用 `get_future_waypoints_for_agents_from_db()` 并传入对应的 agent track_tokens。
 
-    :param log_file: The log file to query.
-    :param token: The lidar_pc token for which to obtain the objects.
-    :return: The tracked objects associated with the token.
+    :param log_file: 要查询的日志文件。
+    :param token: 用于查询追踪对象的 lidar_pc token。
+    :return: 与该 token 关联的 TrackedObjects。
     """
     query = """
         SELECT  c.name AS category_name,
@@ -734,14 +699,14 @@ def get_future_waypoints_for_agents_from_db(
     log_file: str, track_tokens: Union[Generator[str, None, None], List[str]], start_timestamp: int, end_timestamp: int
 ) -> Generator[Tuple[str, Waypoint], None, None]:
     """
-    Obtain the future waypoints for the selected agents from the DB in the provided time window.
-    Results are sorted by track token, then by timestamp in ascending order.
+    获取在指定时间窗口内 agent 的未来路径点。
+    结果按 track_token 升序、timestamp 升序排列。
 
-    :param log_file: The log file to query.
-    :param track_tokens: The track_tokens for which to query.
-    :param start_timestamp: The starting timestamp for which to query.
-    :param end_timestamp: The maximal time for which to query.
-    :return: A generator of tuples of (track_token, Waypoint), sorted by track_token, then by timestamp in ascending order.
+    :param log_file: 要查询的日志文件。
+    :param track_tokens: 需要查询的 track_token 列表或生成器。
+    :param start_timestamp: 查询起始时间戳 [us]。
+    :param end_timestamp: 查询结束时间戳 [us]。
+    :return: (track_token, Waypoint) 元组的生成器，按 track_token 和 timestamp 排序。
     """
     if not isinstance(track_tokens, list):
         track_tokens = list(track_tokens)
@@ -787,25 +752,22 @@ def get_scenarios_from_db(
     include_cameras: bool = False,
 ) -> Generator[sqlite3.Row, None, None]:
     """
-    Get the scenarios present in the db file that match the specified filter criteria.
-    If a filter is None, then it will be elided from the query.
-    Results are sorted by timestamp ascending
-    :param log_file: The log file to query.
-    :param filter_tokens: If provided, the set of allowable tokens to return.
-    :param filter_types: If provided, the set of allowable scenario types to return.
-    :param filter_map_names: If provided, the set of allowable map names to return.
-    :param include_cameras: If true, filter for lidar_pcs that has corresponding images.
-    :param include_invalid_mission_goals: If true, then scenarios without a valid mission goal will be included
-        (i.e. get_mission_goal_for_sensor_data_token_from_db(token) returns None)
-        If False, then these scenarios will be filtered.
-    :sensor_data_source: Table specification for data sourcing.
-    :return: A sqlite3.Row object with the following fields:
-        * token: The initial lidar_pc token of the scenario.
-        * timestamp: The timestamp of the initial lidar_pc of the scenario.
-        * map_name: The map name from which the scenario came.
-        * scenario_type: One of the mapped scenario types for the scenario.
-            This can be None if there are no matching rows in scenario_types table.
-            If there are multiple matches, then one is selected from the set of allowable filter clauses at random.
+    获取符合筛选条件的场景信息。
+    如果某个筛选条件为 None，则不加入查询过滤。
+    返回结果按时间戳升序排序。
+
+    :param log_file: 要查询的日志文件。
+    :param filter_tokens: 若提供，只返回这些 token 的场景。
+    :param filter_types: 若提供，只返回这些类型的场景。
+    :param filter_map_names: 若提供，只返回对应地图名称的场景。
+    :param include_invalid_mission_goals: 如果为 True，包含没有有效目标的任务场景；
+                                         如果为 False，将过滤掉无效任务目标。
+    :param include_cameras: 如果为 True，只返回有图像数据的场景。
+    :return: sqlite3.Row 对象，包含以下字段：
+        * token: 场景初始帧的 lidar_pc token。
+        * timestamp: 场景初始帧的时间戳。
+        * map_name: 场景对应的地图名称。
+        * scenario_type: 场景类型，可能为 None（如果没有匹配）。
     """
     filter_clauses = []
     args: List[Union[str, bytearray]] = []
@@ -842,7 +804,7 @@ def get_scenarios_from_db(
         invalid_goals_joins = ""
     else:
         invalid_goals_joins = """
-        ---Join on ego_pose to filter scenarios that do not have a valid mission goal
+        -- 过滤掉没有有效 mission goal 的场景
         INNER JOIN scene AS invalid_goal_scene
             ON invalid_goal_scene.token = lp.scene_token
         INNER JOIN ego_pose AS invalid_goal_ego_pose
@@ -875,16 +837,15 @@ def get_scenarios_from_db(
             FROM ordered_scenes AS o
             CROSS JOIN num_scenes AS n
 
-            -- Define "valid" scenes as those that have at least 2 before and 2 after
-            -- Note that the token denotes the beginning of a scene
+            -- 定义“有效”场景：至少前后各有两个 lidar_pc 数据
             WHERE o.row_num >= 3 AND o.row_num < n.cnt - 1
         )
         SELECT  lp.token,
                 lp.timestamp,
                 l.map_version AS map_name,
 
-                -- scenarios can have multiple tags
-                -- Pick one arbitrarily from the list of acceptable tags
+                -- 场景可以有多个标签
+                -- 此处从可用标签中任选一个作为输出
                 MAX(st.type) AS scenario_type
         FROM lidar_pc AS lp
         LEFT OUTER JOIN scenario_tag AS st
@@ -910,9 +871,11 @@ def get_scenarios_from_db(
 
 def get_lidarpc_tokens_with_scenario_tag_from_db(log_file: str) -> Generator[Tuple[str, str], None, None]:
     """
-    Get the LidarPc tokens that are tagged with a scenario from the DB, sorted by scenario_type in ascending order.
-    :param log_file: The log file to query.
-    :return: A generator of (scenario_tag, token) tuples where `token` is tagged with `scenario_tag`
+    获取所有被标记过场景类型的 lidar_pc token。
+    按场景类型升序返回。
+
+    :param log_file: 要查询的日志文件。
+    :return: (scenario_tag, token) 元组生成器。
     """
     query = """
     SELECT  st.type,
@@ -930,11 +893,11 @@ def get_lidarpc_tokens_with_scenario_tag_from_db(log_file: str) -> Generator[Tup
 
 def get_sensor_token(log_file: str, table: str, channel: str) -> str:
     """
-    Get the sensor token of a particular channel for the given table.
-    :param log_file: The DB file.
-    :param table: The sensor table to query.
-    :param channel: The channel to select.
-    :return: The token of the sensor with the given channel.
+    获取指定传感器通道的 token。
+    :param log_file: 要查询的数据库文件。
+    :param table: 传感器所在的数据库表名。
+    :param channel: 通道名称。
+    :return: 表示该通道的 token。
     """
     q1 = f"""
         SELECT token
@@ -944,7 +907,7 @@ def get_sensor_token(log_file: str, table: str, channel: str) -> str:
     row = execute_one(q1, (), log_file)
 
     if row is None:
-        raise RuntimeError(f"Channel {channel} not found in table {table}!")
+        raise RuntimeError(f"未找到通道 {channel} 在表 {table} 中！")
 
     return str(row['token'].hex())
 
@@ -957,27 +920,27 @@ def get_images_from_lidar_tokens(
     lookback_window_us: int = 50000,
 ) -> Generator[Image, None, None]:
     """
-    Get the images from the given channels for the given lidar_pc_tokens.
-    Note: Both lookahead_window_us and lookback_window_us is defaulted to 50000us (0.05s). This means the search window
-          is 0.1s centered around the queried lidar_pc timestamp. This is because lidar_pc are stored at 20hz and images
-          are at 10hz for NuPlanDB. Hence, we can search the entire duration between lidar_pcs.
-          Consider the example below where we want to query for images from the lidar_pc '4'. '|' represents a sample.
+    根据提供的 lidar_pc token 获取对应摄像头通道的图像数据。
 
-          iteration: 0    1    2    3   [4]   5    6
-          timestamp: 0   0.05 0.1  0.15 0.2  0.25 0.3
-          lidar_pc:  |    |    |    |    |    |    |
-          Images:    |         |         |         |
-          search window:            [---------]
+    注意：lookahead_window_us 和 lookback_window_us 默认值为 50000 微秒（即 0.05 秒），
+          总搜索窗口为 0.1 秒，围绕 lidar_pc 时间戳居中。
+          因为 NuPlanDB 中 lidar_pc 是 20Hz，image 是 10Hz，所以需要这个窗口来保证能查到最近的图像。
 
-          We set the search window to lookahead_window_us + lookback_window_us = 0.1s centered around lidar_pc '4'.
-          This should guarantee that we retrieve the correct images associated with the queried lidar_pc.
+    示例：
+    iteration: 0    1    2    3   [4]   5    6
+    timestamp: 0   0.05 0.1  0.15 0.2  0.25 0.3
+    lidar_pc:  |    |    |    |    |    |    |
+    Images:    |         |         |         |
+    search window:           [---------]
 
-    :param log_file: The log file to query.
-    :param tokens: corresponding lidar_pc.
-    :param channels: The channel to select.
-    :param lookahead_window_us: [us] The time duration to look ahead relative to the lidar_pc for matching images.
-    :param lookback_window_us: [us] The time duration to look back relative to the lidar_pc for matching images.
-    :return: Images as a SensorDataTableRow.
+    我们设置搜索窗口为 0.1 秒，以确保能检索到正确的图像数据。
+
+    :param log_file: 要查询的日志文件。
+    :param tokens: lidar_pc token 列表。
+    :param channels: 要查询的摄像头通道列表。
+    :param lookahead_window_us: [us] 向前查找时间窗口。
+    :param lookback_window_us: [us] 向后查找时间窗口。
+    :return: 图像数据 Image 实例的生成器。
     """
     query = f"""
             SELECT
@@ -991,7 +954,7 @@ def get_images_from_lidar_tokens(
                 cam.channel
             FROM image AS img
               INNER JOIN lidar_pc AS lpc
-                ON  img.timestamp <= lpc.timestamp + ?
+                ON img.timestamp <= lpc.timestamp + ?
                 AND img.timestamp >= lpc.timestamp - ?
               INNER JOIN camera AS cam
                 ON cam.token = img.camera_token
@@ -1011,10 +974,11 @@ def get_cameras(
     channels: List[str],
 ) -> Generator[Camera, None, None]:
     """
-    Get the cameras for the given channels.
-    :param log_file: The log file to query.
-    :param channels: The channel to select.
-    :return: Cameras as a SensorDataTableRow.
+    获取指定通道的摄像头数据。
+    
+    :param log_file: 要查询的日志文件。
+    :param channels: 要查询的通道列表。
+    :return: Camera 实例的生成器。
     """
     query = f"""
             SELECT *

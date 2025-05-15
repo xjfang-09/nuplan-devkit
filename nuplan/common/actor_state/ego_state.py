@@ -16,7 +16,7 @@ from nuplan.common.utils.split_state import SplitState
 
 
 class EgoState(InterpolatableState):
-    """Represent the current state of ego, along with its dynamic attributes."""
+    """表示自车（ego）当前状态及其动态属性。"""
 
     def __init__(
         self,
@@ -27,11 +27,11 @@ class EgoState(InterpolatableState):
         time_point: TimePoint,
     ):
         """
-        :param car_footprint: The CarFootprint of Ego
-        :param dynamic_car_state: The current dynamical state of ego
-        :param tire_steering_angle: The current steering angle of the tires
-        :param is_in_auto_mode: If the state refers to car in autonomous mode
-        :param time_point: Time stamp of the state
+        :param car_footprint: 自车的车辆轮廓（CarFootprint）
+        :param dynamic_car_state: 自车的当前动态状态
+        :param tire_steering_angle: 当前轮胎转向角度
+        :param is_in_auto_mode: 表示该状态是否来自自动驾驶模式下的车辆
+        :param time_point: 状态的时间戳
         """
         self._car_footprint = car_footprint
         self._tire_steering_angle = tire_steering_angle
@@ -42,7 +42,7 @@ class EgoState(InterpolatableState):
     @cached_property
     def waypoint(self) -> Waypoint:
         """
-        :return: waypoint corresponding to this ego state
+        :return: 与此 ego 状态对应的路径点（Waypoint）
         """
         return Waypoint(
             time_point=self.time_point,
@@ -53,12 +53,12 @@ class EgoState(InterpolatableState):
     @staticmethod
     def deserialize(vector: List[Union[int, float]], vehicle: VehicleParameters) -> EgoState:
         """
-        Deserialize object, ordering kept for backward compatibility
-        :param vector: List of variables for deserialization
-        :param vehicle: Vehicle parameters
+        反序列化对象，保持顺序以兼容旧版本格式。
+        :param vector: 用于反序列化的变量列表。
+        :param vehicle: 车辆参数。
         """
         if len(vector) != 9:
-            raise RuntimeError(f'Expected a vector of size 9, got {len(vector)}')
+            raise RuntimeError(f'期望长度为9的向量，实际长度为 {len(vector)}')
 
         return EgoState.build_from_rear_axle(
             rear_axle_pose=StateSE2(vector[1], vector[2], vector[3]),
@@ -70,7 +70,7 @@ class EgoState(InterpolatableState):
         )
 
     def __iter__(self) -> Iterable[Union[int, float]]:
-        """Iterable over ego parameters"""
+        """返回 ego 的所有参数迭代器"""
         return iter(
             (
                 self.time_us,
@@ -86,7 +86,7 @@ class EgoState(InterpolatableState):
         )
 
     def to_split_state(self) -> SplitState:
-        """Inherited, see superclass."""
+        """继承自父类，请参考 superclass 文档"""
         linear_states = [
             self.time_us,
             self.rear_axle.x,
@@ -104,9 +104,9 @@ class EgoState(InterpolatableState):
 
     @staticmethod
     def from_split_state(split_state: SplitState) -> EgoState:
-        """Inherited, see superclass."""
+        """继承自父类，请参考 superclass 文档"""
         if len(split_state) != 10:
-            raise RuntimeError(f'Expected a variable state vector of size 10, got {len(split_state)}')
+            raise RuntimeError(f'期望大小为10的状态向量，实际长度为 {len(split_state)}')
 
         return EgoState.build_from_rear_axle(
             rear_axle_pose=StateSE2(
@@ -122,86 +122,86 @@ class EgoState(InterpolatableState):
     @property
     def is_in_auto_mode(self) -> bool:
         """
-        :return: True if ego is in auto mode, False otherwise.
+        :return: 如果处于自动模式返回 True，否则返回 False。
         """
         return self._is_in_auto_mode
 
     @property
     def car_footprint(self) -> CarFootprint:
         """
-        Getter for Ego's Car footprint
-        :return: Ego's car footprint
+        获取自车的车辆轮廓（CarFootprint）。
+        :return: 自车的车辆轮廓。
         """
         return self._car_footprint
 
     @property
     def tire_steering_angle(self) -> float:
         """
-        Getter for Ego's tire steering angle
-        :return: Ego's tire steering angle
+        获取自车轮胎的转向角度。
+        :return: 自车轮胎的转向角度。
         """
         return self._tire_steering_angle
 
     @property
     def center(self) -> StateSE2:
         """
-        Getter for Ego's center pose (center of mass)
-        :return: Ego's center pose
+        获取自车中心位置的姿态（质心）。
+        :return: 自车中心姿态。
         """
         return self._car_footprint.oriented_box.center
 
     @property
     def rear_axle(self) -> StateSE2:
         """
-        Getter for Ego's rear axle pose (middle of the rear axle)
-        :return: Ego's rear axle pose
+        获取自车后轴位置的姿态（后轴中间）。
+        :return: 自车后轴姿态。
         """
         return self.car_footprint.rear_axle
 
     @property
     def time_point(self) -> TimePoint:
         """
-        Time stamp of the EgoState
-        :return: EgoState time stamp
+        获取 ego 状态的时间戳。
+        :return: ego 状态的时间戳。
         """
         return self._time_point
 
     @property
     def time_us(self) -> int:
         """
-        Time in micro seconds
-        :return: [us].
+        获取以微秒为单位的时间。
+        :return: [us] 时间值。
         """
         return int(self.time_point.time_us)
 
     @property
     def time_seconds(self) -> float:
         """
-        Time in seconds
-        :return: [s]
+        获取以秒为单位的时间。
+        :return: [s] 时间值。
         """
         return float(self.time_us * 1e-6)
 
     @property
     def dynamic_car_state(self) -> DynamicCarState:
         """
-        Getter for the dynamic car state of Ego.
-        :return: The dynamic car state
+        获取自车的动态状态。
+        :return: 自车的动态状态。
         """
         return self._dynamic_car_state
 
     @property
     def scene_object_metadata(self) -> SceneObjectMetadata:
         """
-        :return: create scene object metadata
+        :return: 创建场景对象元数据
         """
         return SceneObjectMetadata(token='ego', track_token="ego", track_id=-1, timestamp_us=self.time_us)
 
     @cached_property
     def agent(self) -> AgentState:
         """
-        Casts the EgoState to an Agent object.
-        :return: An Agent object with the parameters of EgoState
+        将 EgoState 转换为 Agent 对象。
+        :return: 包含 EgoState 参数的 Agent 对象。
         """
         return AgentState(
             metadata=self.scene_object_metadata,
@@ -225,18 +225,18 @@ class EgoState(InterpolatableState):
         tire_steering_rate: float = 0.0,
     ) -> EgoState:
         """
-        Initializer using raw parameters, assumes that the reference frame is CAR_POINT.REAR_AXLE
-        :param rear_axle_pose: Pose of ego's rear axle
-        :param rear_axle_velocity_2d: Vectorial velocity of Ego's rear axle
-        :param rear_axle_acceleration_2d: Vectorial acceleration of Ego's rear axle
-        :param angular_vel: Angular velocity of Ego
-        :param angular_accel: Angular acceleration of Ego,
-        :param tire_steering_angle: Angle of the tires
-        :param is_in_auto_mode: True if ego is in auto mode, false otherwise
-        :param time_point: Timestamp of the ego state
-        :param vehicle_parameters: Vehicle parameters
-        :param tire_steering_rate: Steering rate of tires [rad/s]
-        :return: The initialized EgoState
+        使用原始参数初始化，假设参考系为后轴。
+        :param rear_axle_pose: 后轴的位置姿态
+        :param rear_axle_velocity_2d: 后轴的速度矢量
+        :param rear_axle_acceleration_2d: 后轴的加速度矢量
+        :param angular_vel: 自车的角速度
+        :param angular_accel: 自车的角加速度
+        :param tire_steering_angle: 轮胎转向角度
+        :param is_in_auto_mode: 是否处于自动模式，默认为 True
+        :param time_point: ego 状态的时间戳
+        :param vehicle_parameters: 车辆参数
+        :param tire_steering_rate: 轮胎转向速率 [rad/s]
+        :return: 初始化完成的 EgoState 实例
         """
         car_footprint = CarFootprint.build_from_rear_axle(
             rear_axle_pose=rear_axle_pose, vehicle_parameters=vehicle_parameters
@@ -272,17 +272,17 @@ class EgoState(InterpolatableState):
         angular_accel: float = 0.0,
     ) -> EgoState:
         """
-        Initializer using raw parameters, assumes that the reference frame is center frame
-        :param center: Pose of ego center
-        :param center_velocity_2d: Vectorial velocity of Ego's center
-        :param center_acceleration_2d: Vectorial acceleration of Ego's center
-        :param tire_steering_angle: Angle of the tires
-        :param time_point: Timestamp of the ego state
-        :param vehicle_parameters: Vehicle parameters
-        :param is_in_auto_mode: True if ego is in auto mode, false otherwise, defaults to True
-        :param angular_vel: Angular velocity of Ego, defaults to 0.0
-        :param angular_accel: Angular acceleration of Ego, defaults to 0.0
-        :return: The initialized EgoState
+        使用原始参数初始化自车状态，假设参考系为中心坐标系（center frame）
+        :param center: 自车中心的姿态（pose）
+        :param center_velocity_2d: 自车中心的速度矢量
+        :param center_acceleration_2d: 自车中心的加速度矢量
+        :param tire_steering_angle: 轮胎转向角度
+        :param time_point: ego 状态的时间戳
+        :param vehicle_parameters: 车辆参数
+        :param is_in_auto_mode: 如果车辆处于自动驾驶模式则为 True，默认为 True
+        :param angular_vel: 自车角速度，默认为 0.0
+        :param angular_accel: 自车角加速度，默认为 0.0
+        :return: 初始化完成的 EgoState 实例
         """
         car_footprint = CarFootprint.build_from_center(center, vehicle_parameters)
         rear_axle_to_center_dist = car_footprint.rear_axle_to_center_dist
@@ -311,7 +311,7 @@ class EgoState(InterpolatableState):
 
 class EgoStateDot(EgoState):
     """
-    A class representing the dynamics of the EgoState. This class exist mostly for clarity sake.
+    表示 EgoState 的动力学状态。该类主要是为了提高代码可读性而存在。
     """
 
     pass
