@@ -10,99 +10,99 @@ Geometry = Union[Polygon, LineString]
 
 class OccupancyMap(abc.ABC):
     """
-    A class for handling spatial relationships between geometries. The two main functionalities are
-    1. collision checking
-    2. querying nearest geometry
+    一个用于处理几何体之间空间关系的类。主要功能包括：
+    1. 碰撞检测
+    2. 查询最近的几何体
     """
 
     @abc.abstractmethod
     def get_nearest_entry_to(self, geometry_id: str) -> Tuple[str, Geometry, float]:
         """
-        Returns the row who's geometry is the nearest to the queried one
-        :param geometry_id: id of the queried geometry
-        :return: nearest geometry, corresponding ID, and distance to nearest geometry
-        @raises AssertionError if the occupancy does not contain geometry_id
+        返回与查询几何体最近的几何体所在的行
+        :param geometry_id: 查询几何体的 ID
+        :return: 最近的几何体、对应的 ID 和到最近几何体的距离
+        @raises AssertionError 如果占用图中不包含 geometry_id
         """
         pass
 
     @abc.abstractmethod
     def intersects(self, geometry: Geometry) -> OccupancyMap:
         """
-        Returns a new occupancy map containing all geometries that intersects the given geometry
-        :param geometry: geometry to check for intersection
+        返回一个新的占用图，其中包含所有与给定几何体相交的几何体
+        :param geometry: 要检查相交的几何体
         """
         pass
 
     @abc.abstractmethod
     def insert(self, geometry_id: str, geometry: Geometry) -> None:
         """
-        Inserts a geometry to the occupancy map
-        :param geometry_id: id of the geometry
-        :param geometry: geometry to be inserted
+        向占用图中插入一个几何体
+        :param geometry_id: 几何体的 ID
+        :param geometry: 要插入的几何体
         """
         pass
 
     @abc.abstractmethod
     def get(self, geometry_id: str) -> Geometry:
         """
-        Gets the geometry with the corresponding geometry_id
-        :param geometry_id: the id corresponding to the geometry
+        获取与对应 geometry_id 关联的几何体
+        :param geometry_id: 几何体的 ID
         """
         pass
 
     @abc.abstractmethod
     def set(self, geometry_id: str, geometry: Geometry) -> None:
         """
-        Set a specific geometry with a new one
-        :param geometry_id: the id corresponding to the geometry
-        :param geometry: the new geometry to set
+        使用新的几何体设置特定几何体
+        :param geometry_id: 几何体的 ID
+        :param geometry: 要设置的新几何体
         """
         pass
 
     @abc.abstractmethod
     def get_all_ids(self) -> List[str]:
         """
-        Return ids of all geometries in the occupancy map
-        :return: all ids as a list of strings
+        返回占用图中所有几何体的 ID
+        :return: 包含所有 ID 的字符串列表
         """
 
     @abc.abstractmethod
     def get_all_geometries(self) -> List[Geometry]:
         """
-        Return all geometries in the occupancy map
-        :return: all geometries as a list of Geometry
+        返回占用图中所有的几何体
+        :return: 包含所有几何体的 Geometry 列表
         """
 
     @property
     @abc.abstractmethod
     def size(self) -> int:
         """
-        :return: the number of entries in occupancy map
+        :return: 占用图中的条目数量
         """
         pass
 
     @abc.abstractmethod
     def is_empty(self) -> bool:
         """
-        :return: true if the occupancy map is empty
+        :return: 如果占用图为空则返回 True
         """
         pass
 
     @abc.abstractmethod
     def contains(self, geometry_id: str) -> bool:
         """
-        :return: true if a geometry with the given id exists in the occupancy map
+        :return: 如果占用图中存在具有给定 ID 的几何体则返回 True
         """
         pass
 
     @abc.abstractmethod
     def remove(self, geometry_ids: List[str]) -> None:
         """
-        Removes the geometries with the corresponding geometry_ids
-        :param geometry_ids: the ids corresponding to the geometries
+        移除与对应 geometry_ids 关联的几何体
+        :param geometry_ids: 几何体的 ID 列表
         """
         pass
 
     def __len__(self) -> int:
-        """Support len() as returning the number of entries in the map."""
+        """支持 len()，返回地图中的条目数量。"""
         return self.size
