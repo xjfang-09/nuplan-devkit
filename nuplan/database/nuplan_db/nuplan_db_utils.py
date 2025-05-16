@@ -4,12 +4,12 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class SensorDataSource:
     """
-    Class holding parameters for querying db files to extract sensor data.
+    包含查询数据库文件以提取传感器数据的参数的类。
 
-    For example, for querying lidar data the attributes would be:
+    例如，对于查询激光雷达数据，属性将是：
     table: lidar_pc
     sensor_table: lidar
-    sensor_token_column: lidar_token (this is how the column holding the sensor token is stored in the `table`
+    sensor_token_column: lidar_token (这是存储传感器令牌的 `table` 中的列名)
     channel: MergedPointCloud
     """
 
@@ -19,35 +19,35 @@ class SensorDataSource:
     channel: str
 
     def __post_init__(self) -> None:
-        """Checks that the tables provided are compatible"""
+        """检查提供的表是否兼容"""
         if self.table == 'lidar_pc':
             assert (
                 self.sensor_table == "lidar"
-            ), f"Incompatible sensor_table: {self.sensor_table} for table {self.table}"
+            ), f"与表 {self.table} 不兼容的 sensor_table: {self.sensor_table}"
         elif self.table == 'image':
             assert (
                 self.sensor_table == "camera"
-            ), f"Incompatible sensor_table: {self.sensor_table} for table {self.table}"
+            ), f"与表 {self.table} 不兼容的 sensor_table: {self.sensor_table}"
         else:
-            raise ValueError(f"Unknown requested sensor table: {self.table}!")
+            raise ValueError(f"未知的传感器表请求: {self.table}!")
 
         assert (
             self.sensor_token_column == f"{self.sensor_table}_token"
-        ), f"Incompatible sensor_token_column: {self.sensor_token_column} for sensor_table {self.sensor_table}"
+        ), f"与 sensor_table {self.sensor_table} 不兼容的 sensor_token_column: {self.sensor_token_column}"
 
 
 def get_lidarpc_sensor_data() -> SensorDataSource:
     """
-    Builds the SensorDataSource for a lidar_pc.
-    :return: The query parameters for lidar_pc.
+    构建用于 lidar_pc 的 SensorDataSource。
+    :return: lidar_pc 的查询参数。
     """
     return SensorDataSource('lidar_pc', 'lidar', 'lidar_token', 'MergedPointCloud')
 
 
 def get_camera_channel_sensor_data(channel: str) -> SensorDataSource:
     """
-    Builds the SensorDataSource for image from a specified channel.
-    :param channel: The channel to select.
-    :return: The query parameters for image.
+    构建来自指定通道的图像的 SensorDataSource。
+    :param channel: 要选择的通道。
+    :return: 图像的查询参数。
     """
     return SensorDataSource('image', 'camera', 'camera_token', channel)

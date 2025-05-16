@@ -31,14 +31,14 @@ from nuplan.database.maps_db.layer import MapLayer
 
 class NuPlanMap(AbstractMap):
     """
-    NuPlanMap implementation of Map API.
+    NuPlanMap 的 Map API 实现。
     """
 
     def __init__(self, maps_db: IMapsDB, map_name: str) -> None:
         """
-        Initializes the map class.
-        :param maps_db: MapsDB instance.
-        :param map_name: Name of the map.
+        初始化地图类。
+        :param maps_db: MapsDB 实例。
+        :param map_name: 地图名称。
         """
         self._maps_db = maps_db
         self._vector_map: Dict[str, VectorLayer] = defaultdict(VectorLayer)
@@ -76,38 +76,38 @@ class NuPlanMap(AbstractMap):
             SemanticMapLayer.DRIVABLE_AREA: 'drivable_area',
         }
 
-        # Special vector layer mapping for lane connector polygons.
+        # 车道连接器多边形的特殊矢量层映射。
         self._LANE_CONNECTOR_POLYGON_LAYER = 'gen_lane_connectors_scaled_width_polygons'
 
     def __reduce__(self) -> Tuple[Type['NuPlanMap'], Tuple[Any, ...]]:
         """
-        Hints on how to reconstruct the object when pickling.
-        This object is reconstructed by pickle to avoid serializing potentially large state/caches.
-        :return: Object type and constructor arguments to be used.
+        提供有关如何在序列化时重建对象的提示。
+        通过 pickle 重建此对象以避免序列化可能较大的状态/缓存。
+        :return: 对象类型和用于构造的参数。
         """
         return self.__class__, (self._maps_db, self._map_name)
 
     @property
     def map_name(self) -> str:
-        """Inherited, see superclass."""
+        """继承自父类，参见父类。"""
         return self._map_name
 
     def get_available_map_objects(self) -> List[SemanticMapLayer]:
-        """Inherited, see superclass."""
+        """继承自父类，参见父类。"""
         return list(self._map_object_getter.keys())
 
     def get_available_raster_layers(self) -> List[SemanticMapLayer]:
-        """Inherited, see superclass."""
+        """继承自父类，参见父类。"""
         return list(self._raster_layer_mapping.keys())
 
     def get_raster_map_layer(self, layer: SemanticMapLayer) -> RasterLayer:
-        """Inherited, see superclass."""
+        """继承自父类，参见父类。"""
         layer_id = self._semantic_raster_layer_map(layer)
 
         return self._load_raster_layer(layer_id)
 
     def get_raster_map(self, layers: List[SemanticMapLayer]) -> RasterMap:
-        """Inherited, see superclass."""
+        """继承自父类，参见父类。"""
         raster_map = RasterMap(layers=defaultdict(RasterLayer))
 
         for layer in layers:
@@ -116,7 +116,7 @@ class NuPlanMap(AbstractMap):
         return raster_map
 
     def is_in_layer(self, point: Point2D, layer: SemanticMapLayer) -> bool:
-        """Inherited, see superclass."""
+        """继承自父类，参见父类。"""
         if layer == SemanticMapLayer.TURN_STOP:
             stop_lines = self._get_vector_map_layer(SemanticMapLayer.STOP_LINE)
             in_stop_line = stop_lines.loc[stop_lines.contains(geom.Point(point.x, point.y))]
@@ -126,19 +126,19 @@ class NuPlanMap(AbstractMap):
         return bool(is_in_type(point.x, point.y, self._get_vector_map_layer(layer)))
 
     def get_all_map_objects(self, point: Point2D, layer: SemanticMapLayer) -> List[MapObject]:
-        """Inherited, see superclass."""
+        """继承自父类，参见父类。"""
         try:
             return self._get_all_map_objects(point, layer)
         except KeyError:
-            raise ValueError(f"Object representation for layer: {layer.name} is unavailable")
+            raise ValueError(f"图层 {layer.name} 的对象表示不可用")
 
     def get_one_map_object(self, point: Point2D, layer: SemanticMapLayer) -> Optional[MapObject]:
-        """Inherited, see superclass."""
+        """继承自父类，参见父类。"""
         map_objects = self.get_all_map_objects(point, layer)
 
         if len(map_objects) > 1:
             raise AssertionError(
-                f"{len(map_objects)} map objects found. Expected only one. " "Try using get_all_map_objects()"
+                f"找到 {len(map_objects)} 个地图对象。仅期望一个。请尝试使用 get_all_map_objects()"
             )
 
         if len(map_objects) == 0:
@@ -149,7 +149,7 @@ class NuPlanMap(AbstractMap):
     def get_proximal_map_objects(
         self, point: Point2D, radius: float, layers: List[SemanticMapLayer]
     ) -> Dict[SemanticMapLayer, List[MapObject]]:
-        """Inherited, see superclass."""
+        """继承自父类，参见父类。"""
         x_min, x_max = point.x - radius, point.x + radius
         y_min, y_max = point.y - radius, point.y + radius
         patch = geom.box(x_min, y_min, x_max, y_max)
@@ -157,7 +157,7 @@ class NuPlanMap(AbstractMap):
         supported_layers = self.get_available_map_objects()
         unsupported_layers = [layer for layer in layers if layer not in supported_layers]
 
-        assert len(unsupported_layers) == 0, f"Object representation for layer(s): {unsupported_layers} is unavailable"
+        assert len(unsupported_layers) == 0, f"图层 {unsupported_layers} 的对象表示不可用"
 
         object_map: Dict[SemanticMapLayer, List[MapObject]] = defaultdict(list)
 
@@ -167,7 +167,7 @@ class NuPlanMap(AbstractMap):
         return object_map
 
     def get_map_object(self, object_id: str, layer: SemanticMapLayer) -> Optional[MapObject]:
-        """Inherited, see superclass."""
+        """继承自父类，参见父类。"""
         try:
             if object_id not in self._map_objects[layer]:
                 map_object: MapObject = self._map_object_getter[layer](object_id)
@@ -175,12 +175,12 @@ class NuPlanMap(AbstractMap):
 
             return self._map_objects[layer][object_id]
         except KeyError:
-            raise ValueError(f"Object representation for layer: {layer.name} object: {object_id} is unavailable")
+            raise ValueError(f"图层 {layer.name} 的对象 {object_id} 表示不可用")
 
     def get_distance_to_nearest_map_object(
         self, point: Point2D, layer: SemanticMapLayer
     ) -> Tuple[Optional[str], Optional[float]]:
-        """Inherited from superclass."""
+        """继承自父类，参见父类。"""
         surfaces = self._get_vector_map_layer(layer)
 
         if surfaces is not None:
@@ -189,10 +189,8 @@ class NuPlanMap(AbstractMap):
             )
             surfaces = surfaces.sort_values(by='distance_to_point')
 
-            # A single surface might be made up of multiple polygons (due to an old practice of annotating a long
-            # surface with multiple polygons; going forward there are plans by the mapping team to update the maps such
-            # that one surface is covered by at most one polygon), thus we simply pick whichever polygon is closest to
-            # the point.
+            # 单个表面可能由多个多边形组成（由于旧的注释实践，一个长表面可能由多个多边形组成；未来地图团队计划更新地图，
+            # 使得一个表面最多由一个多边形覆盖），因此我们简单地选择离点最近的多边形。
             nearest_surface = surfaces.iloc[0]
             nearest_surface_id = nearest_surface.fid
             nearest_surface_distance = nearest_surface.distance_to_point
@@ -203,29 +201,29 @@ class NuPlanMap(AbstractMap):
         return nearest_surface_id, nearest_surface_distance
 
     def get_distance_to_nearest_raster_layer(self, point: Point2D, layer: SemanticMapLayer) -> float:
-        """Inherited from superclass"""
+        """继承自父类，参见父类。"""
         raise NotImplementedError
 
     def get_distances_matrix_to_nearest_map_object(
         self, points: List[Point2D], layer: SemanticMapLayer
     ) -> Optional[npt.NDArray[np.float64]]:
         """
-        Returns the distance matrix (in meters) between a list of points and their nearest desired surface.
-            That distance is the L1 norm from the point to the closest location on the surface.
-        :param points: [m] A list of x, y coordinates in global frame.
-        :param layer: A semantic layer to query.
-        :return: An array of shortest distance from each point to the nearest desired surface.
+        返回点列表与其最近目标表面之间的距离矩阵（以米为单位）。
+        该距离是从点到表面最近位置的 L1 范数。
+        :param points: [m] 全局坐标系中的 x, y 坐标列表。
+        :param layer: 要查询的语义图层。
+        :return: 每个点到最近目标表面的最短距离数组。
         """
         surfaces = self._get_vector_map_layer(layer)
 
         if surfaces is not None:
-            # Construct geo series
+            # 构造 GeoSeries
             corner_points = geopandas.GeoSeries([geom.Point(point.x, point.y) for point in points])
 
-            # Distance
+            # 距离
             distances = surfaces.geometry.apply(lambda g: corner_points.distance(g))
 
-            # Distance to the nearest surface
+            # 到最近表面的距离
             distances = np.asarray(distances.min())
             return cast(npt.NDArray[np.float64], distances)
         else:
@@ -233,9 +231,9 @@ class NuPlanMap(AbstractMap):
 
     def initialize_all_layers(self) -> None:
         """
-        Load all layers to vector map
-        :param: None
-        :return: None
+        加载所有图层到矢量地图中。
+        :param: 无
+        :return: 无
         """
         for layer_name in self._vector_layer_mapping.values():
             self._load_vector_map_layer(layer_name)
@@ -245,27 +243,27 @@ class NuPlanMap(AbstractMap):
 
     def _semantic_vector_layer_map(self, layer: SemanticMapLayer) -> str:
         """
-        Mapping from SemanticMapLayer int to MapsDB internal representation of vector layers.
-        :param layer: The querired semantic map layer.
-        :return: A internal layer name as a string.
-        @raise ValueError if the requested layer does not exist for MapsDBMap
+        从 SemanticMapLayer 映射到 MapsDB 内部表示的矢量图层。
+        :param layer: 查询的语义地图图层。
+        :return: 内部图层名称字符串。
+        @raise ValueError 如果请求的图层不存在于 MapsDBMap 中。
         """
         try:
             return self._vector_layer_mapping[layer]
         except KeyError:
-            raise ValueError("Unknown layer: {}".format(layer.name))
+            raise ValueError("未知图层: {}".format(layer.name))
 
     def _semantic_raster_layer_map(self, layer: SemanticMapLayer) -> str:
         """
-        Mapping from SemanticMapLayer int to MapsDB internal representation of raster layers.
-        :param layer: The queried semantic map layer.
-        :return: A internal layer name as a string.
-        @raise ValueError if the requested layer does not exist for MapsDBMap
+        从 SemanticMapLayer 映射到 MapsDB 内部表示的栅格图层。
+        :param layer: 查询的语义地图图层。
+        :return: 内部图层名称字符串。
+        @raise ValueError 如果请求的图层不存在于 MapsDBMap 中。
         """
         try:
             return self._raster_layer_mapping[layer]
         except KeyError:
-            raise ValueError("Unknown layer: {}".format(layer.name))
+            raise ValueError("未知图层: {}".format(layer.name))
 
     def _get_vector_map_layer(self, layer: SemanticMapLayer) -> VectorLayer:
         """Inherited, see superclass."""

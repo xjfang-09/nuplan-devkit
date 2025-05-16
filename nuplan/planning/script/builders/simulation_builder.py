@@ -36,27 +36,27 @@ def build_simulations(
     pre_built_planners: Optional[List[AbstractPlanner]] = None,
 ) -> List[SimulationRunner]:
     """
-    Build simulations.
-    :param cfg: DictConfig. Configuration that is used to run the experiment.
-    :param callbacks: Callbacks for simulation.
-    :param worker: Worker for job execution.
-    :param callbacks_worker: worker pool to use for callbacks from sim
-    :param pre_built_planners: List of pre-built planners to run in simulation.
-    :return A dict of simulation engines with challenge names.
+    构建模拟。
+    :param cfg: DictConfig. 用于运行实验的配置。
+    :param callbacks: 模拟的回调函数。
+    :param worker: 用于任务执行的工作池。
+    :param callbacks_worker: 用于模拟回调的工作池。
+    :param pre_built_planners: 预构建的规划器列表，用于运行模拟。
+    :return: 包含挑战名称的模拟引擎字典。
     """
-    logger.info('Building simulations...')
+    logger.info('正在构建模拟...')
 
-    # Create Simulation object container
+    # 创建 Simulation 对象容器
     simulations = list()
 
-    # Retrieve scenarios
-    logger.info('Extracting scenarios...')
+    # 获取场景
+    logger.info('提取场景...')
 
-    # Only allow simulation with NuPlanScenarioBuilder except when the NUPLAN_SIMULATION_ALLOW_ANY_BUILDER environment variable is set to a non-zero value.
+    # 仅允许使用 NuPlanScenarioBuilder 进行模拟，除非环境变量 NUPLAN_SIMULATION_ALLOW_ANY_BUILDER 设置为非零值。
     if not int(os.environ.get("NUPLAN_SIMULATION_ALLOW_ANY_BUILDER", "0")) and not is_target_type(
         cfg.scenario_builder, NuPlanScenarioBuilder
     ):
-        raise ValueError(f"Simulation framework only runs with NuPlanScenarioBuilder. Got {cfg.scenario_builder}")
+        raise ValueError(f"模拟框架仅支持 NuPlanScenarioBuilder。当前为 {cfg.scenario_builder}")
 
     scenario_filter = DistributedScenarioFilter(
         cfg=cfg,
@@ -71,39 +71,39 @@ def build_simulations(
 
     metric_engines_map = {}
     if cfg.run_metric:
-        logger.info('Building metric engines...')
+        logger.info('正在构建指标引擎...')
         metric_engines_map = build_metrics_engines(cfg=cfg, scenarios=scenarios)
-        logger.info('Building metric engines...DONE')
+        logger.info('指标引擎构建完成')
     else:
-        logger.info('Metric engine is disable')
+        logger.info('指标引擎已禁用')
 
-    logger.info('Building simulations from %d scenarios...', len(scenarios))
+    logger.info('从 %d 个场景构建模拟...', len(scenarios))
 
-    # Build a metric metadata file
+    # 构建指标元数据文件
     for scenario in scenarios:
 
-        # Build planners
+        # 构建规划器
         if pre_built_planners is None:
             if 'planner' not in cfg.keys():
-                raise KeyError('Planner not specified in config. Please specify a planner using "planner" field.')
+                raise KeyError('配置中未指定规划器。请使用 "planner" 字段指定规划器。')
 
             planners = build_planners(cfg.planner, scenario)
         else:
             planners = pre_built_planners
 
         for planner in planners:
-            # Ego Controller
+            # 自车控制器
             ego_controller: AbstractEgoController = instantiate(cfg.ego_controller, scenario=scenario)
 
-            # Simulation Manager
+            # 模拟管理器
             simulation_time_controller: AbstractSimulationTimeController = instantiate(
                 cfg.simulation_time_controller, scenario=scenario
             )
 
-            # Perception
+            # 感知
             observations: AbstractObservation = build_observations(cfg.observation, scenario=scenario)
 
-            # Metric Engine
+            # 指标引擎
             metric_engine = metric_engines_map.get(scenario.scenario_type, None)
             if metric_engine is not None:
                 stateful_callbacks = [MetricCallback(metric_engine=metric_engine, worker_pool=callbacks_worker)]
@@ -115,7 +115,7 @@ def build_simulations(
                     instantiate(cfg.callback["simulation_log_callback"], worker_pool=callbacks_worker)
                 )
 
-            # Construct simulation and manager
+            # 构建模拟和管理器
             simulation_setup = SimulationSetup(
                 time_controller=simulation_time_controller,
                 observations=observations,
@@ -130,5 +130,5 @@ def build_simulations(
             )
             simulations.append(SimulationRunner(simulation, planner))
 
-    logger.info('Building simulations...DONE!')
+    logger.info('模拟构建完成！')
     return simulations

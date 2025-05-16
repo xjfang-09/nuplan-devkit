@@ -13,7 +13,7 @@ from nuplan.planning.simulation.trajectory.predicted_trajectory import Predicted
 
 class Agent(AgentTemporalState, AgentState):
     """
-    AgentState with future and past trajectory.
+    带有未来和过去轨迹的 AgentState。
     """
 
     def __init__(
@@ -27,14 +27,14 @@ class Agent(AgentTemporalState, AgentState):
         past_trajectory: Optional[PredictedTrajectory] = None,
     ):
         """
-        Representation of an Agent in the scene (Vehicles, Pedestrians, Bicyclists and GenericObjects).
-        :param tracked_object_type: Type of the current agent.
-        :param oriented_box: Geometrical representation of the Agent.
-        :param velocity: Velocity (vectorial) of Agent.
-        :param metadata: Agent's metadata.
-        :param angular_velocity: The scalar angular velocity of the agent, if available.
-        :param predictions: Optional list of (possibly multiple) predicted trajectories.
-        :param past_trajectory: Optional past trajectory of this agent.
+        场景中 Agent 的表示（车辆、行人、自行车和通用对象）。
+        :param tracked_object_type: 当前 agent 的类型。
+        :param oriented_box: Agent 的几何表示。
+        :param velocity: Agent 的速度（矢量）。
+        :param metadata: Agent 的元数据。
+        :param angular_velocity: agent 的标量角速度（如果有）。
+        :param predictions: 可选的（可能有多个）预测轨迹列表。
+        :param past_trajectory: 此 agent 的可选过去轨迹。
         """
         AgentTemporalState.__init__(
             self,
@@ -54,9 +54,9 @@ class Agent(AgentTemporalState, AgentState):
     @classmethod
     def from_agent_state(cls, agent: AgentState) -> Agent:
         """
-        Create Agent from AgentState.
-        :param agent: input single agent state.
-        :return: Agent with None for future and past trajectory.
+        从 AgentState 创建 Agent。
+        :param agent: 输入的单个 agent 状态。
+        :return: 未来和过去轨迹均为 None 的 Agent。
         """
         return cls(
             tracked_object_type=agent.tracked_object_type,

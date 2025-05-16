@@ -23,7 +23,7 @@ from nuplan.common.maps.nuplan_map.utils import get_row_with_value
 
 class NuPlanLaneConnector(LaneConnector):
     """
-    NuPlanMap implementation of LaneConnector.
+    NuPlanMap 中 LaneConnector 的实现。
     """
 
     def __init__(
@@ -38,14 +38,14 @@ class NuPlanLaneConnector(LaneConnector):
         map_data: AbstractMap,
     ):
         """
-        Constructor of NuPlanLaneConnector.
-        :param lane_connector_id: unique identifier of the lane connector.
-        :param lanes_df: the geopandas GeoDataframe that contains all lanes in the map.
-        :param lane_connectors_df: the geopandas GeoDataframe that contains all lane connectors in the map.
-        :param baseline_paths_df: the geopandas GeoDataframe that contains all baselines in the map.
-        :param boundaries_df: the geopandas GeoDataframe that contains all boundaries in the map.
-        :param stop_lines_df: the geopandas GeoDataframe that contains all stop lines in the map.
-        :param lane_connector_polygon_df: the geopandas GeoDataframe that contains polygons for lane connectors.
+        NuPlanLaneConnector 的构造函数。
+        :param lane_connector_id: 车道连接器的唯一标识符。
+        :param lanes_df: 包含地图中所有车道的 GeoDataFrame。
+        :param lane_connectors_df: 包含地图中所有车道连接器的 GeoDataFrame。
+        :param baseline_paths_df: 包含地图中所有基线的 GeoDataFrame。
+        :param boundaries_df: 包含地图中所有边界的 GeoDataFrame。
+        :param stop_lines_df: 包含地图中所有停止线的 GeoDataFrame。
+        :param lane_connector_polygon_df: 包含车道连接器多边形的 GeoDataFrame。
         """
         super().__init__(lane_connector_id)
         self._lanes_df = lanes_df
@@ -59,7 +59,7 @@ class NuPlanLaneConnector(LaneConnector):
 
     @cached_property
     def incoming_edges(self) -> List[LaneGraphEdgeMapObject]:
-        """Inherited from superclass."""
+        """从父类继承。"""
         incoming_lane_id = self._get_lane_connector()["exit_lane_fid"]
 
         return [
@@ -77,7 +77,7 @@ class NuPlanLaneConnector(LaneConnector):
 
     @cached_property
     def outgoing_edges(self) -> List[LaneGraphEdgeMapObject]:
-        """Inherited from superclass."""
+        """从父类继承。"""
         outgoing_lane_id = self._get_lane_connector()["entry_lane_fid"]
 
         return [
@@ -95,17 +95,17 @@ class NuPlanLaneConnector(LaneConnector):
 
     @cached_property
     def parallel_edges(self) -> List[LaneGraphEdgeMapObject]:
-        """Inherited from superclass"""
+        """从父类继承。"""
         raise NotImplementedError
 
     @cached_property
     def baseline_path(self) -> PolylineMapObject:
-        """Inherited from superclass."""
+        """从父类继承。"""
         return NuPlanPolylineMapObject(get_row_with_value(self._baseline_paths_df, "lane_connector_fid", self.id))
 
     @cached_property
     def left_boundary(self) -> PolylineMapObject:
-        """Inherited from superclass."""
+        """从父类继承。"""
         boundary_fid = get_row_with_value(self._lane_connector_polygon_df, "lane_connector_fid", self.id)[
             "left_boundary_fid"
         ]
@@ -113,7 +113,7 @@ class NuPlanLaneConnector(LaneConnector):
 
     @cached_property
     def right_boundary(self) -> PolylineMapObject:
-        """Inherited from superclass."""
+        """从父类继承。"""
         boundary_fid = get_row_with_value(self._lane_connector_polygon_df, "lane_connector_fid", self.id)[
             "right_boundary_fid"
         ]
@@ -121,49 +121,49 @@ class NuPlanLaneConnector(LaneConnector):
 
     @cached_property
     def speed_limit_mps(self) -> Optional[float]:
-        """Inherited from superclass."""
+        """从父类继承。"""
         speed_limit = self._get_lane_connector()["speed_limit_mps"]
         is_valid = speed_limit == speed_limit and speed_limit is not None
         return float(speed_limit) if is_valid else None
 
     @cached_property
     def polygon(self) -> Polygon:
-        """Inherited from superclass. Note, the polygon is inferred from the baseline."""
+        """从父类继承。注意，多边形是从基线推断的。"""
         lane_connector_polygon_row = get_row_with_value(self._lane_connector_polygon_df, "lane_connector_fid", self.id)
         return lane_connector_polygon_row.geometry
 
     def is_left_of(self, other: LaneConnector) -> bool:
-        """Inherited from superclass."""
-        # Due to lack of lane connector adjacency information, this always returns false
+        """从父类继承。"""
+        # 由于缺乏车道连接器的邻接信息，此方法始终返回 False
         return False
 
     def is_right_of(self, other: LaneConnector) -> bool:
-        """Inherited from superclass."""
-        # Due to lack of lane connector adjacency information, this always returns false
+        """从父类继承。"""
+        # 由于缺乏车道连接器的邻接信息，此方法始终返回 False
         return False
 
     def get_roadblock_id(self) -> str:
-        """Inherited from superclass."""
+        """从父类继承。"""
         return str(self._get_lane_connector()["lane_group_connector_fid"])
 
     @cached_property
     def parent(self) -> RoadBlockGraphEdgeMapObject:
-        """Inherited from superclass"""
+        """从父类继承。"""
         return self._map_data.get_map_object(self.get_roadblock_id(), SemanticMapLayer.ROADBLOCK_CONNECTOR)
 
     def has_traffic_lights(self) -> bool:
-        """Inherited from superclass."""
+        """从父类继承。"""
         return bool(self._get_lane_connector()["traffic_light_stop_line_fids"])
 
     @cached_property
     def stop_lines(self) -> List[StopLine]:
-        """Inherited from superclass."""
+        """从父类继承。"""
         stop_line_ids = self._get_lane_connector()["traffic_light_stop_line_fids"]
         stop_line_ids = cast(List[str], stop_line_ids.replace(" ", "").split(","))
 
         candidate_stop_lines = [NuPlanStopLine(id_, self._stop_lines_df) for id_ in stop_line_ids if id_]
 
-        # This lane connector has no stop lines associated
+        # 此车道连接器没有关联的停止线
         if not candidate_stop_lines:
             return []
 
@@ -173,16 +173,16 @@ class NuPlanLaneConnector(LaneConnector):
             if stop_line.polygon.intersects(self.baseline_path.linestring)
         ]
 
-        # If intersection check is successful then return stop lines.
+        # 如果交集检查成功，则返回停止线。
         if stop_lines:
             return stop_lines
 
-        # Stop line is not intersecting the lane connector's baseline. Perform a distance check instead.
+        # 停止线未与车道连接器的基线相交。改为执行距离检查。
         def distance_to_stop_line(stop_line: StopLine) -> float:
             """
-            Calculates the distance between the first point of the lane connector's baseline path
-            :param stop_line: The stop line to calculate the distance to.
-            :return: [m] The distance between first point points of the lane connector to the stop_line polygon.
+            计算车道连接器基线路径的第一个点与停止线之间的距离。
+            :param stop_line: 要计算距离的停止线。
+            :return: [m] 车道连接器第一个点与停止线多边形之间的距离。
             """
             start = Point(self.baseline_path.linestring.coords[0])
             return float(start.distance(stop_line.polygon))
@@ -192,23 +192,23 @@ class NuPlanLaneConnector(LaneConnector):
         return [candidate_stop_lines[np.argmin(distances)]]
 
     def turn_type(self) -> LaneConnectorType:
-        """Inherited from superclass"""
+        """从父类继承。"""
         raise NotImplementedError
 
     def get_width_left_right(
         self, point: Point2D, include_outside: bool = False
     ) -> Tuple[Optional[float], Optional[float]]:
-        """Inherited from superclass."""
+        """从父类继承。"""
         raise NotImplementedError
 
     def oriented_distance(self, point: Point2D) -> float:
-        """Inherited from superclass"""
+        """从父类继承。"""
         raise NotImplementedError
 
     def _get_lane_connector(self) -> pd.Series:
         """
-        Gets the series from the lane dataframe containing lane's id.
-        :return: the respective series from the lanes dataframe.
+        从车道数据框中获取包含车道 ID 的系列。
+        :return: 车道数据框中相应的系列。
         """
         if self._lane_connector is None:
             self._lane_connector = get_row_with_value(self._lane_connectors_df, "fid", self.id)

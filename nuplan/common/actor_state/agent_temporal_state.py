@@ -9,10 +9,10 @@ from nuplan.planning.simulation.trajectory.predicted_trajectory import Predicted
 
 class AgentTemporalState:
     """
-    Actor with current, multimodal future as well as past trajectory.
-        The future trajectory probabilities have to sum up to 1.0.
-        The past trajectory is only single modal with mode probability 1.0.
-        The last waypoint in past trajectory has to be the same as current position (we check only timestamp).
+    带有当前、多模态未来轨迹以及过去轨迹的参与体。
+        未来轨迹的概率之和必须为 1.0。
+        过去轨迹仅为单模态，模式概率为 1.0。
+        过去轨迹的最后一个航点必须与当前位置一致（这里只检查时间戳）。
     """
 
     def __init__(
@@ -22,10 +22,10 @@ class AgentTemporalState:
         past_trajectory: Optional[PredictedTrajectory] = None,
     ):
         """
-        Initialize actor temporal state which has past as well as future trajectory
-        :param initial_time_stamp: time stamp the current detections
-        :param predictions: future multimodal trajectory
-        :param past_trajectory: past trajectory transversed
+        初始化具有过去和未来轨迹的参与体时序状态
+        :param initial_time_stamp: 当前检测的时间戳
+        :param predictions: 未来多模态轨迹
+        :param past_trajectory: 已经过的过去轨迹
         """
         self._initial_time_stamp = initial_time_stamp
         self.predictions: List[PredictedTrajectory] = predictions if predictions is not None else []
@@ -34,9 +34,9 @@ class AgentTemporalState:
     @property
     def previous_state(self) -> Optional[Waypoint]:
         """
-        :return: None if agent's previous state does not exists, otherwise return previous state
+        :return: 如果 agent 没有上一个状态则返回 None，否则返回上一个状态
         """
-        # At minimum 2 states are required since the last state is the same as current state
+        # 至少需要 2 个状态，因为最后一个状态与当前状态相同
         if not self.past_trajectory or len(self.past_trajectory.valid_waypoints) < 2:
             return None
         return self.past_trajectory.waypoints[-2]
@@ -44,54 +44,54 @@ class AgentTemporalState:
     @property
     def predictions(self) -> List[PredictedTrajectory]:
         """
-        Getter for agents predicted trajectories
-        :return: Trajectories
+        获取 agent 的预测轨迹
+        :return: 轨迹列表
         """
         return self._predictions
 
     @predictions.setter
     def predictions(self, predicted_trajectories: List[PredictedTrajectory]) -> None:
         """
-        Setter for predicted trajectories, checks if the listed probabilities sum to one.
-        :param predicted_trajectories: List of Predicted trajectories
+        设置预测轨迹，检查概率之和是否为 1。
+        :param predicted_trajectories: 预测轨迹列表
         """
         if not predicted_trajectories:
             self._predictions = predicted_trajectories
             return
-        # Sanity check that if predictions are provided, probabilities sum to 1
+        # 健全性检查：如果提供了预测轨迹，概率之和必须为 1
         probability_sum = sum(prediction.probability for prediction in predicted_trajectories)
         if not abs(probability_sum - 1) < 1e-6 and predicted_trajectories:
-            raise ValueError(f"The provided trajectory probabilities did not sum to one, but to {probability_sum:.2f}!")
+            raise ValueError(f"所提供的轨迹概率之和不是 1，而是 {probability_sum:.2f}！")
         self._predictions = predicted_trajectories
 
     @property
     def past_trajectory(self) -> Optional[PredictedTrajectory]:
         """
-        Getter for agents predicted trajectories
-        :return: Trajectories
+        获取 agent 的过去轨迹
+        :return: 轨迹
         """
         return self._past_trajectory
 
     @past_trajectory.setter
     def past_trajectory(self, past_trajectory: Optional[PredictedTrajectory]) -> None:
         """
-        Setter for predicted trajectories, checks if the listed probabilities sum to one.
-        :param past_trajectory: Driven Trajectory
+        设置过去轨迹，检查概率之和是否为 1。
+        :param past_trajectory: 已行驶的轨迹
         """
         if not past_trajectory:
-            # In case it is none, no check is needed
+            # 如果为 None，无需检查
             self._past_trajectory = past_trajectory
             return
 
-        # Make sure that the current state is set!
+        # 确保当前状态已设置！
         last_waypoint = past_trajectory.waypoints[-1]
         if not last_waypoint:
-            raise RuntimeError("Last waypoint represents current agent's state, this should not be None!")
+            raise RuntimeError("最后一个航点表示当前 agent 的状态，不应为 None！")
 
-        # Sanity check that last waypoint is at the same time index as the current one
+        # 健全性检查：最后一个航点的时间戳应与当前一致
         if last_waypoint.time_point != self._initial_time_stamp:
             raise ValueError(
-                "The provided trajectory does not end at current agent state!"
+                "所提供的轨迹未以当前 agent 状态结束！"
                 f" {last_waypoint.time_us} != {self._initial_time_stamp}"
             )
         self._past_trajectory = past_trajectory

@@ -10,31 +10,31 @@ from nuplan.planning.simulation.trajectory.interpolated_trajectory import Interp
 
 def _validate_waypoints(waypoints: List[InterpolatableState]) -> None:
     """
-    Make sure that waypoints are valid for interpolation
-        raise in case they are empty or they are not monotonically increasing
-    :param waypoints: list of waypoints to be interpolated
+    确保用于插值的路径点是有效的
+    如果路径点为空或它们不是单调递增的，则抛出异常
+    :param waypoints: 要插值的路径点列表
     """
     if not waypoints:
-        raise RuntimeError("There are no waypoints!")
+        raise RuntimeError("路径点为空！")
 
     if not np.all(np.diff([w.time_us for w in waypoints]) > 0):
-        raise ValueError(f"The waypoints are not monotonically increasing: {[w.time_us for w in waypoints]}!")
+        raise ValueError(f"路径点不是单调递增的: {[w.time_us for w in waypoints]}！")
 
 
 def _compute_desired_time_steps(
     start_timestamp: int, end_timestamp: int, horizon_len_s: float, interval_s: float
 ) -> Tuple[npt.NDArray[np.float64], int]:
     """
-    Compute the desired sampling
-    :param start_timestamp: [us] starting time stamp
-    :param end_timestamp: [us] ending time stamp
-    :param horizon_len_s: [s] length of horizon
-    :param interval_s: [s] interval between states
-    :return: array of time stamps, and the desired length
+    计算所需的采样时间步
+    :param start_timestamp: [微秒] 起始时间戳
+    :param end_timestamp: [微秒] 结束时间戳
+    :param horizon_len_s: [秒] 时间范围长度
+    :param interval_s: [秒] 状态之间的间隔
+    :return: 时间戳数组和所需的长度
     """
-    # Extract desired time stamps
+    # 提取所需的时间戳
     num_future_boxes = int(horizon_len_s / interval_s)
-    num_target_timestamps = num_future_boxes + 1  # include box at current frame t0
+    num_target_timestamps = num_future_boxes + 1  # 包括当前帧 t0 的时间戳
     return np.linspace(start=start_timestamp, stop=end_timestamp, num=num_target_timestamps), num_target_timestamps
 
 
@@ -42,13 +42,13 @@ def _interpolate_waypoints(
     waypoints: List[InterpolatableState], target_timestamps: npt.NDArray[np.float64], pad_with_none: bool = True
 ) -> List[Optional[InterpolatableState]]:
     """
-    Interpolate waypoints when required from target_timestamps
-    :param waypoints: to be interpolated
-    :param target_timestamps: desired sampling
-    :param pad_with_none: if True, the output will have None for states that can not be interpolated
-    :return: list of existent interpolations, if an interpolation is not possible, it will be replaced with None
+    根据所需的时间戳插值路径点
+    :param waypoints: 要插值的路径点
+    :param target_timestamps: 所需的采样时间戳
+    :param pad_with_none: 如果为 True，则无法插值的状态将用 None 替代
+    :return: 插值后的路径点列表，如果无法插值，则替换为 None
     """
-    # Interpolate trajectory
+    # 插值轨迹
     trajectory = InterpolatedTrajectory(waypoints)
     if pad_with_none:
         return [
@@ -64,15 +64,15 @@ def interpolate_future_waypoints(
     waypoints: List[InterpolatableState], horizon_len_s: float, interval_s: float
 ) -> List[Optional[InterpolatableState]]:
     """
-    Interpolate waypoints which are in the future. If not enough waypoints are provided, we append None
-    :param waypoints: list of waypoints, there needs to be at least one
-    :param horizon_len_s: [s] time distance to future
-    :param interval_s: [s] interval between two states
-    :return: interpolated waypoints
+    插值未来的路径点。如果提供的路径点不足，则追加 None
+    :param waypoints: 路径点列表，至少需要一个
+    :param horizon_len_s: [秒] 到未来的时间距离
+    :param interval_s: [秒] 两个状态之间的间隔
+    :return: 插值后的路径点
     """
     _validate_waypoints(waypoints)
 
-    # Extract desired time stamps
+    # 提取所需的时间戳
     start_timestamp = waypoints[0].time_us
     end_timestamp = int(start_timestamp + horizon_len_s * 1e6)
     target_timestamps, num_future_boxes = _compute_desired_time_steps(
@@ -80,10 +80,10 @@ def interpolate_future_waypoints(
     )
 
     if len(waypoints) == 1:
-        # Do not interpolate if trajectory is too short, and just append None
+        # 如果轨迹太短，则不进行插值，仅追加 None
         return waypoints + cast(List[Optional[InterpolatableState]], [None] * (num_future_boxes - 1))
 
-    # Interpolate trajectory
+    # 插值轨迹
     return _interpolate_waypoints(waypoints, target_timestamps)
 
 
@@ -91,16 +91,16 @@ def interpolate_past_waypoints(
     waypoints: List[InterpolatableState], horizon_len_s: float, interval_s: float
 ) -> List[Optional[InterpolatableState]]:
     """
-    Interpolate waypoints which are in the past. We assume that they are still monotonically increasing.
-        If not enough waypoints are provided, we append None
-    :param waypoints: list of waypoints, there needs to be at least one
-    :param horizon_len_s: [s] time distance to past
-    :param interval_s: [s] interval between two states
-    :return: interpolated waypoints
+    插值过去的路径点。假设它们仍然是单调递增的。
+    如果提供的路径点不足，则追加 None
+    :param waypoints: 路径点列表，至少需要一个
+    :param horizon_len_s: [秒] 到过去的时间距离
+    :param interval_s: [秒] 两个状态之间的间隔
+    :return: 插值后的路径点
     """
     _validate_waypoints(waypoints)
 
-    # Extract desired time stamps
+    # 提取所需的时间戳
     end_timestamp = waypoints[-1].time_us
     start_timestamp = max(int(end_timestamp - horizon_len_s * 1e6), 0)
     target_timestamps, num_future_boxes = _compute_desired_time_steps(
@@ -108,12 +108,12 @@ def interpolate_past_waypoints(
     )
 
     if len(waypoints) == 1:
-        # Do not interpolate if trajectory is too short, and just append None
+        # 如果轨迹太短，则不进行插值，仅追加 None
         return cast(List[Optional[InterpolatableState]], [None] * (num_future_boxes - 1)) + waypoints
 
-    # Interpolate trajectory
+    # 插值轨迹
     sampled_trajectory = _interpolate_waypoints(waypoints, target_timestamps)
-    # Last state must exist!
+    # 最后一个状态必须存在！
     if not sampled_trajectory[-1]:
-        raise RuntimeError("Last state of the trajectory has to be existent!")
+        raise RuntimeError("轨迹的最后一个状态必须存在！")
     return sampled_trajectory

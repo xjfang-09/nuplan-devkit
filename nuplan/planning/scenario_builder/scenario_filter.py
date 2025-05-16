@@ -6,65 +6,62 @@ from typing import List, Optional, Sequence, Union
 @dataclass(frozen=True)
 class ScenarioFilter:
     """
-    Collection of filters used to construct scenarios from a database for training/simulation.
+    用于从数据库中构建训练/仿真场景的过滤器集合。
     """
 
-    # List of scenario types to include:
+    # 要包含的场景类型列表：
     scenario_types: Optional[List[str]]
-    # List of scenarios to include in the form of (log_name, token):
+    # 要包含的场景列表，形式为 (log_name, token)：
     scenario_tokens: Optional[List[Sequence[str]]]
 
-    # Filter scenarios by log names:
+    # 按日志名称过滤场景：
     log_names: Optional[List[str]]
-    # Filter scenarios by map names:
+    # 按地图名称过滤场景：
     map_names: Optional[List[str]]
 
-    # Number of scenarios per type:
+    # 每种类型的场景数量：
     num_scenarios_per_type: Optional[int]
-    # Limit total scenarios (float = fraction, int = num):
+    # 限制总场景数量（float = 比例，int = 数量）：
     limit_total_scenarios: Optional[Union[int, float]]
-    # Threshold for the interval of time between scenario initial lidar timestamps in seconds:
+    # 场景初始激光雷达时间戳之间的时间间隔阈值（秒）：
     timestamp_threshold_s: Optional[float]
 
-    # Inclusive minimum threshold for total distance covered (meters, frame-by-frame) by the ego center
-    #   for scenario to be kept:
+    # 自车中心覆盖的总距离（逐帧计算）的最小阈值（米），用于保留场景：
     ego_displacement_minimum_m: Optional[float]
 
-    # Whether to expand multi-sample scenarios to multiple single-sample scenarios.
+    # 是否将多样本场景扩展为多个单样本场景：
     expand_scenarios: bool
-    # Whether to remove scenarios where the mission goal is invalid:
+    # 是否移除任务目标无效的场景：
     remove_invalid_goals: bool
-    # Whether to shuffle the scenarios:
+    # 是否对场景进行随机排序：
     shuffle: bool
 
-    # Exclusive threshold that the ego's speed must rise above (meters per second) for scenario to be kept:
+    # 自车速度必须超过的排除阈值（米/秒），用于保留场景：
     ego_start_speed_threshold: Optional[float] = None
-    # Inclusive threshold that the ego's speed must fall below (meters per second) for scenario to be kept:
+    # 自车速度必须低于的包含阈值（米/秒），用于保留场景：
     ego_stop_speed_threshold: Optional[float] = None
-    # Value at or below which a cross-threshold speed change between two timepoints should be ignored as noise:
+    # 两个时间点之间的速度变化低于该值时，将被视为噪声忽略：
     speed_noise_tolerance: Optional[float] = None
 
-    # Path to a json file containing a Set of lidarpc tokens from a Nuplan DB that we want our scenarios to contain:
+    # 指向包含 Nuplan 数据库中 lidarpc token 集的 json 文件的路径，我们希望场景包含这些 token：
     token_set_path: Optional[Path] = None
 
-    # A threshold in [0, 1].
-    # If 1, a scenario must ONLY contain lidarpc tokens in the set at token_set_path (see above)
-    #   in order to pass the filter.
-    # If in [0, 1), scenarios will pass only if the fraction of their lidarpc tokens contained in the set
-    #   is strictly greater than the threshold below:
+    # 阈值范围为 [0, 1]。
+    # 如果为 1，场景必须仅包含 token_set_path（见上文）中的 lidarpc token，才能通过过滤器。
+    # 如果在 [0, 1) 范围内，场景仅在其 lidarpc token 中包含的比例严格大于以下阈值时才能通过：
     fraction_in_token_set_threshold: Optional[float] = None
 
-    # Radius around ego to check for the presence of on-route route lane segments
-    # Uses a VectorMap to collect lane segments and route status
-    # Used to filter out scenarios with no route
+    # 自车周围的半径，用于检查是否存在在路线上行驶的车道段
+    # 使用 VectorMap 收集车道段和路线状态
+    # 用于过滤掉没有路线的场景
     ego_route_radius: Optional[float] = None
 
     def __post_init__(self) -> None:
-        """Sanitize class attributes."""
+        """清理类属性。"""
         if self.num_scenarios_per_type is not None:
-            assert 0 < self.num_scenarios_per_type, "num_scenarios_per_type should be a positive integer"
+            assert 0 < self.num_scenarios_per_type, "num_scenarios_per_type 应为正整数"
 
         if isinstance(self.limit_total_scenarios, float):
-            assert 0.0 < self.limit_total_scenarios <= 1.0, "limit_total_scenarios should be in (0, 1] when float"
+            assert 0.0 < self.limit_total_scenarios <= 1.0, "当 limit_total_scenarios 为 float 时，其值应在 (0, 1] 范围内"
         elif isinstance(self.limit_total_scenarios, int):
-            assert 0 < self.limit_total_scenarios, "limit_total_scenarios should be positive when integer"
+            assert 0 < self.limit_total_scenarios, "当 limit_total_scenarios 为整数时，其值应为正数"

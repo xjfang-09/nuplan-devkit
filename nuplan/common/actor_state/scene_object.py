@@ -14,101 +14,105 @@ from nuplan.common.actor_state.tracked_objects_types import TrackedObjectType
 @dataclass(frozen=True)
 class SceneObjectMetadata:
     """
-    Metadata for every object
+    场景中每个对象的元数据。
     """
 
-    # Timestamp of this object in micro seconds
+    # 时间戳（微秒）
     timestamp_us: int
-    # Unique token in a whole dataset
+    # 全局唯一的 token
     token: str
-    # Human understandable id of the object
+    # 对象可读 ID
     track_id: Optional[int]
-    # Token of the object which is temporally consistent
+    # 时序一致的对象 token
     track_token: Optional[str]
-    # Human readable category name
+    # 类别名称（可读字符串）
     category_name: Optional[str] = None
 
     @property
     def timestamp_s(self) -> float:
         """
-        :return: timestamp in seconds
+        :return: 时间戳（以秒为单位）。
         """
         return self.timestamp_us * 1e-6
 
 
 class SceneObject:
-    """Class describing SceneObjects, i.e. objects present in a planning scene"""
+    """
+    表示场景中的对象，如车辆、行人等。
+    """
 
     def __init__(
-        self, tracked_object_type: TrackedObjectType, oriented_box: OrientedBox, metadata: SceneObjectMetadata
+        self,
+        tracked_object_type: TrackedObjectType,
+        oriented_box: OrientedBox,
+        metadata: SceneObjectMetadata,
     ):
         """
-        Representation of an Agent in the scene.
-        :param tracked_object_type: Type of the current static object
-        :param oriented_box: Geometrical representation of the static object
-        :param metadata: High-level information about the object
+        初始化一个场景对象。
+        :param tracked_object_type: 当前静态对象的类型。
+        :param oriented_box: 静态对象的几何表示。
+        :param metadata: 对象的高层信息。
         """
         self._metadata = metadata
         self.instance_token = None
         self._tracked_object_type = tracked_object_type
-
         self._box: OrientedBox = oriented_box
 
     @property
     def metadata(self) -> SceneObjectMetadata:
         """
-        Getter for object metadata
-        :return: Object's metadata
+        获取对象的元数据。
+        :return: SceneObjectMetadata 实例。
         """
         return self._metadata
 
     @property
     def token(self) -> str:
         """
-        Getter for object unique token, different for same object in different samples
-        :return: The unique token
+        获取对象唯一 token。不同样本中同一对象的 token 不同。
+        :return: 唯一 token。
         """
         return self._metadata.token
 
     @property
     def track_token(self) -> Optional[str]:
         """
-        Getter for object unique token tracked across samples, same for same objects in different samples
-        :return: The unique track token
+        获取跨样本跟踪的唯一 token。同一对象在不同样本中 track_token 相同。
+        :return: 唯一 track_token。
         """
         return self._metadata.track_token
 
     @property
     def tracked_object_type(self) -> TrackedObjectType:
         """
-        Getter for object classification type
-        :return: The object classification type
+        获取对象分类类型。
+        :return: TrackedObjectType 实例。
         """
         return self._tracked_object_type
 
     @property
     def box(self) -> OrientedBox:
         """
-        Getter for object OrientedBox
-        :return: The object oriented box
+        获取对象的 OrientedBox 几何表示。
+        :return: OrientedBox 实例。
         """
         return self._box
 
     @property
     def center(self) -> StateSE2:
         """
-        Getter for object center pose
-        :return: The center pose
+        获取对象的中心姿态。
+        :return: StateSE2 实例。
         """
         return self.box.center
 
     @classmethod
     def make_random(cls, token: str, object_type: TrackedObjectType) -> SceneObject:
         """
-        Instantiates a random SceneObject.
-        :param token: Unique token
-        :param object_type: Classification type
-        :return: SceneObject instance.
+        创建一个随机生成的 SceneObject 实例。
+        :param token: 唯一标识 token。
+        :param object_type: 分类类型。
+        :return: SceneObject 实例。
         """
         center = random.sample(range(50), 2)
         heading = np.random.uniform(-np.pi, np.pi)
@@ -133,14 +137,14 @@ class SceneObject:
         size: Tuple[float, float, float],
     ) -> SceneObject:
         """
-        Instantiates a generic SceneObject.
-        :param token: The token of the object.
-        :param track_token: The track token of the object.
-        :param timestamp_us: [us] timestamp for the object.
-        :param track_id: Human readable track id.
-        :param center: Center pose.
-        :param size: Size of the geometrical box (width, length, height).
-        :return: SceneObject instance.
+        根据原始参数创建通用场景对象。
+        :param token: 对象的 token。
+        :param track_token: 跨样本跟踪的 token。
+        :param timestamp_us: [us] 对象的时间戳。
+        :param track_id: 可读的对象 ID。
+        :param center: 对象的中心姿态。
+        :param size: 几何包围盒大小 (width, length, height)。
+        :return: SceneObject 实例。
         """
         box = OrientedBox(center, width=size[0], length=size[1], height=size[2])
         return SceneObject(

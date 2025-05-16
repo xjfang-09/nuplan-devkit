@@ -8,11 +8,11 @@ from nuplan.planning.simulation.trajectory.predicted_trajectory import Predicted
 
 def interpolate_agent(agent: AgentTemporalState, horizon_len_s: float, interval_s: float) -> AgentTemporalState:
     """
-    Interpolate agent's future predictions and past trajectory based on the predefined length and interval
-    :param agent: to be interpolated
-    :param horizon_len_s: [s] horizon of predictions
-    :param interval_s: [s] interval between two states
-    :return: interpolated agent, where missing waypoints are replaced with None
+    根据预定义的长度和间隔插值代理的未来预测和过去轨迹
+    :param agent: 要插值的代理
+    :param horizon_len_s: [秒] 预测的时间范围
+    :param interval_s: [秒] 两个状态之间的间隔
+    :return: 插值后的代理，其中缺失的路径点用 None 替代
     """
     interpolated_agent = agent
     if interpolated_agent.predictions:
@@ -41,11 +41,11 @@ def interpolate_tracks(
     tracked_objects: Union[TrackedObjects, List[TrackedObject]], horizon_len_s: float, interval_s: float
 ) -> List[TrackedObject]:
     """
-    Interpolate agent's predictions and past trajectory, if not enough states are present, add NONE!
-    :param tracked_objects: agents to be interpolated
-    :param horizon_len_s: [s] horizon from initial waypoint
-    :param interval_s: [s] interval between two states
-    :return: interpolated agents
+    插值代理的预测和过去轨迹，如果状态不足，则添加 None！
+    :param tracked_objects: 要插值的代理
+    :param horizon_len_s: [秒] 从初始路径点开始的时间范围
+    :param interval_s: [秒] 两个状态之间的间隔
+    :return: 插值后的代理
     """
     all_tracked_objects = (
         tracked_objects if isinstance(tracked_objects, TrackedObjects) else TrackedObjects(tracked_objects)

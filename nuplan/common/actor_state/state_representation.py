@@ -9,71 +9,71 @@ import numpy.typing as npt
 
 
 class TimeDuration:
-    """Class representing a time delta, with a microsecond resolution."""
+    """表示时间间隔的类，具有微秒分辨率。"""
 
     __slots__ = "_time_us"
 
     def __init__(self, *, time_us: int, _direct: bool = True) -> None:
-        """Constructor, should not be called directly. Raises if the keyword parameter _direct is not set to false."""
+        """构造函数，不应直接调用。如果未设置关键字参数 _direct 为 False，则会引发异常。"""
         if _direct:
-            raise RuntimeError("Don't initialize this class directly, use one of the constructors instead!")
+            raise RuntimeError("不要直接初始化此类，请使用构造函数！")
 
         self._time_us = time_us
 
     @classmethod
     def from_us(cls, t_us: int) -> TimeDuration:
         """
-        Constructs a TimeDuration from a value in microseconds.
-        :param t_us: Time in microseconds.
-        :return: TimeDuration.
+        从微秒值构造 TimeDuration。
+        :param t_us: 时间（微秒）。
+        :return: TimeDuration。
         """
-        assert isinstance(t_us, int), "Microseconds must be an integer!"
+        assert isinstance(t_us, int), "微秒值必须是整数！"
         return cls(time_us=t_us, _direct=False)
 
     @classmethod
     def from_ms(cls, t_ms: float) -> TimeDuration:
         """
-        Constructs a TimeDuration from a value in milliseconds.
-        :param t_ms: Time in milliseconds.
-        :return: TimeDuration.
+        从毫秒值构造 TimeDuration。
+        :param t_ms: 时间（毫秒）。
+        :return: TimeDuration。
         """
         return cls(time_us=int(t_ms * int(1e3)), _direct=False)
 
     @classmethod
     def from_s(cls, t_s: float) -> TimeDuration:
         """
-        Constructs a TimeDuration from a value in seconds.
-        :param t_s: Time in seconds.
-        :return: TimeDuration.
+        从秒值构造 TimeDuration。
+        :param t_s: 时间（秒）。
+        :return: TimeDuration。
         """
         return cls(time_us=int(t_s * int(1e6)), _direct=False)
 
     @property
     def time_us(self) -> int:
         """
-        :return: TimeDuration in microseconds.
+        :return: 时间间隔（微秒）。
         """
         return self._time_us
 
     @property
     def time_ms(self) -> float:
         """
-        :return: TimeDuration in milliseconds.
+        :return: 时间间隔（毫秒）。
         """
         return self._time_us / 1e3
 
     @property
     def time_s(self) -> float:
         """
-        :return: TimeDuration in seconds.
+        :return: 时间间隔（秒）。
         """
         return self._time_us / 1e6
 
     def __add__(self, other: object) -> TimeDuration:
         """
-        Adds a time duration to a time duration.
-        :param other: time duration.
-        :return: self + other if other is a TimeDuration.
+        将时间间隔相加。
+        :param other: 时间间隔。
+        :return: self + other（如果 other 是 TimeDuration）。
         """
         if isinstance(other, TimeDuration):
             return TimeDuration.from_us(self.time_us + other.time_us)
@@ -81,9 +81,9 @@ class TimeDuration:
 
     def __sub__(self, other: object) -> TimeDuration:
         """
-        Subtract a time duration from a time duration.
-        :param other: time duration.
-        :return: self - other if other is a TimeDuration.
+        从时间间隔中减去另一个时间间隔。
+        :param other: 时间间隔。
+        :return: self - other（如果 other 是 TimeDuration）。
         """
         if isinstance(other, TimeDuration):
             return TimeDuration.from_us(self.time_us - other.time_us)
@@ -91,9 +91,9 @@ class TimeDuration:
 
     def __mul__(self, other: object) -> TimeDuration:
         """
-        Multiply a time duration by a scalar value.
-        :param other: value to multiply.
-        :return: self * other if other is a scalar.
+        将时间间隔乘以一个标量值。
+        :param other: 要乘以的值。
+        :return: self * other（如果 other 是标量）。
         """
         if isinstance(other, (int, float)):
             return TimeDuration.from_s(self.time_s * other)
@@ -101,9 +101,9 @@ class TimeDuration:
 
     def __rmul__(self, other: object) -> TimeDuration:
         """
-        Multiply a time duration by a scalar value.
-        :param other: value to multiply.
-        :return: self * other if other is a scalar.
+        将时间间隔乘以一个标量值。
+        :param other: 要乘以的值。
+        :return: self * other（如果 other 是标量）。
         """
         if isinstance(other, (int, float)):
             return self * other
@@ -111,9 +111,9 @@ class TimeDuration:
 
     def __truediv__(self, other: object) -> TimeDuration:
         """
-        Divides a time duration by a scalar value.
-        :param other: value to divide for.
-        :return: self / other if other is a scalar.
+        将时间间隔除以一个标量值。
+        :param other: 要除以的值。
+        :return: self / other（如果 other 是标量）。
         """
         if isinstance(other, (int, float)):
             return TimeDuration.from_s(self.time_s / other)
@@ -121,9 +121,9 @@ class TimeDuration:
 
     def __floordiv__(self, other: object) -> TimeDuration:
         """
-        Floor divides a time duration by a scalar value.
-        :param other: value to divide for.
-        :return: self // other if other is a scalar.
+        将时间间隔整除一个标量值。
+        :param other: 要整除的值。
+        :return: self // other（如果 other 是标量）。
         """
         if isinstance(other, (int, float)):
             return TimeDuration.from_s(self.time_s // other)
@@ -131,9 +131,9 @@ class TimeDuration:
 
     def __gt__(self, other: TimeDuration) -> bool:
         """
-        Self is greater than other.
-        :param other: TimeDuration.
-        :return: True if self > other, False otherwise.
+        判断 self 是否大于 other。
+        :param other: 时间间隔。
+        :return: 如果 self > other，则返回 True，否则返回 False。
         """
         if isinstance(other, TimeDuration):
             return self.time_us > other.time_us
@@ -141,9 +141,9 @@ class TimeDuration:
 
     def __ge__(self, other: object) -> bool:
         """
-        Self is greater or equal than other.
-        :param other: TimeDuration.
-        :return: True if self >= other, False otherwise.
+        判断 self 是否大于或等于 other。
+        :param other: 时间间隔。
+        :return: 如果 self >= other，则返回 True，否则返回 False。
         """
         if isinstance(other, TimeDuration):
             return self.time_us >= other.time_us
@@ -151,9 +151,9 @@ class TimeDuration:
 
     def __lt__(self, other: TimeDuration) -> bool:
         """
-        Self is less than other.
-        :param other: TimeDuration.
-        :return: True if self < other, False otherwise.
+        判断 self 是否小于 other。
+        :param other: 时间间隔。
+        :return: 如果 self < other，则返回 True，否则返回 False。
         """
         if isinstance(other, TimeDuration):
             return self.time_us < other.time_us
@@ -161,9 +161,9 @@ class TimeDuration:
 
     def __le__(self, other: TimeDuration) -> bool:
         """
-        Self is less or equal than other.
-        :param other: TimeDuration.
-        :return: True if self <= other, False otherwise.
+        判断 self 是否小于或等于 other。
+        :param other: 时间间隔。
+        :return: 如果 self <= other，则返回 True，否则返回 False。
         """
         if isinstance(other, TimeDuration):
             return self.time_us <= other.time_us
@@ -171,9 +171,9 @@ class TimeDuration:
 
     def __eq__(self, other: object) -> bool:
         """
-        Self is equal to other.
-        :param other: TimeDuration.
-        :return: True if self == other, False otherwise.
+        判断 self 是否等于 other。
+        :param other: 时间间隔。
+        :return: 如果 self == other，则返回 True，否则返回 False。
         """
         if not isinstance(other, TimeDuration):
             return NotImplemented
@@ -182,13 +182,13 @@ class TimeDuration:
 
     def __hash__(self) -> int:
         """
-        :return: hash for this object.
+        :return: 此对象的哈希值。
         """
         return hash(self.time_us)
 
     def __repr__(self) -> str:
         """
-        :return: String representation.
+        :return: 字符串表示。
         """
         return "TimeDuration({}s)".format(self.time_s)
 
@@ -196,30 +196,30 @@ class TimeDuration:
 @dataclass
 class TimePoint:
     """
-    Time instance in a time series.
+    时间序列中的时间点实例。
     """
 
-    time_us: int  # [micro seconds] time since epoch in micro seconds
+    time_us: int  # [微秒] 自纪元以来的微秒数
     __slots__ = "time_us"
 
     def __post_init__(self) -> None:
         """
-        Validate class after creation.
+        创建后验证类。
         """
-        assert self.time_us >= 0, "Time point has to be positive!"
+        assert self.time_us >= 0, "时间点必须为正数！"
 
     @property
     def time_s(self) -> float:
         """
-        :return [s] time in seconds.
+        :return [秒] 时间（秒）。
         """
         return self.time_us * 1e-6
 
     def __add__(self, other: object) -> TimePoint:
         """
-        Adds a TimeDuration to generate a new TimePoint.
-        :param other: time point.
-        :return: self + other.
+        将一个 TimeDuration 添加到生成一个新的 TimePoint。
+        :param other: 时间点。
+        :return: self + other。
         """
         if isinstance(other, (TimeDuration, TimePoint)):
             return TimePoint(self.time_us + other.time_us)
@@ -227,8 +227,8 @@ class TimePoint:
 
     def __radd__(self, other: object) -> TimePoint:
         """
-        :param other: Right addition target.
-        :return: Addition with other if other is a TimeDuration.
+        :param other: 右加操作的目标。
+        :return: 如果 other 是 TimeDuration，则返回加法结果。
         """
         if isinstance(other, TimeDuration):
             return self.__add__(other)
@@ -236,9 +236,9 @@ class TimePoint:
 
     def __sub__(self, other: object) -> TimePoint:
         """
-        Subtract a time duration from a time point.
-        :param other: time duration.
-        :return: self - other if other is a TimeDuration.
+        从一个时间点减去一个时间间隔。
+        :param other: 时间间隔。
+        :return: 如果 other 是 TimeDuration，则返回 self - other。
         """
         if isinstance(other, (TimeDuration, TimePoint)):
             return TimePoint(self.time_us - other.time_us)
@@ -246,9 +246,9 @@ class TimePoint:
 
     def __gt__(self, other: TimePoint) -> bool:
         """
-        Self is greater than other.
-        :param other: time point.
-        :return: True if self > other, False otherwise.
+        判断 self 是否大于 other。
+        :param other: 时间点。
+        :return: 如果 self > other，则返回 True，否则返回 False。
         """
         if isinstance(other, TimePoint):
             return self.time_us > other.time_us
@@ -256,9 +256,9 @@ class TimePoint:
 
     def __ge__(self, other: TimePoint) -> bool:
         """
-        Self is greater or equal than other.
-        :param other: time point.
-        :return: True if self >= other, False otherwise.
+        判断 self 是否大于或等于 other。
+        :param other: 时间点。
+        :return: 如果 self >= other，则返回 True，否则返回 False。
         """
         if isinstance(other, TimePoint):
             return self.time_us >= other.time_us
@@ -266,9 +266,9 @@ class TimePoint:
 
     def __lt__(self, other: TimePoint) -> bool:
         """
-        Self is less than other.
-        :param other: time point.
-        :return: True if self < other, False otherwise.
+        判断 self 是否小于 other。
+        :param other: 时间点。
+        :return: 如果 self < other，则返回 True，否则返回 False。
         """
         if isinstance(other, TimePoint):
             return self.time_us < other.time_us
@@ -276,9 +276,9 @@ class TimePoint:
 
     def __le__(self, other: TimePoint) -> bool:
         """
-        Self is less or equal than other.
-        :param other: time point.
-        :return: True if self <= other, False otherwise.
+        判断 self 是否小于或等于 other。
+        :param other: 时间点。
+        :return: 如果 self <= other，则返回 True，否则返回 False。
         """
         if isinstance(other, TimePoint):
             return self.time_us <= other.time_us
@@ -286,9 +286,9 @@ class TimePoint:
 
     def __eq__(self, other: object) -> bool:
         """
-        Self is equal to other
-        :param other: time point
-        :return: True if self == other, False otherwise
+        判断 self 是否等于 other。
+        :param other: 时间点。
+        :return: 如果 self == other，则返回 True，否则返回 False。
         """
         if not isinstance(other, TimePoint):
             return NotImplemented
@@ -297,66 +297,66 @@ class TimePoint:
 
     def __hash__(self) -> int:
         """
-        :return: hash for this object
+        :return: 此对象的哈希值。
         """
         return hash(self.time_us)
 
     def diff(self, time_point: TimePoint) -> TimeDuration:
         """
-        Computes the TimeDuration between self and another TimePoint.
-        :param time_point: The other time point.
-        :return: The TimeDuration between the two TimePoints.
+        计算 self 和另一个 TimePoint 之间的 TimeDuration。
+        :param time_point: 另一个时间点。
+        :return: 两个时间点之间的 TimeDuration。
         """
         return TimeDuration.from_us(int(self.time_us - time_point.time_us))
 
 
 @dataclass
 class Point2D:
-    """Class to represents 2D points."""
+    """表示二维点的类。"""
 
-    x: float  # [m] location
-    y: float  # [m] location
+    x: float  # [米] 位置
+    y: float  # [米] 位置
     __slots__ = "x", "y"
 
     def __iter__(self) -> Iterable[float]:
         """
-        :return: iterator of tuples (x, y)
+        :return: (x, y) 的迭代器。
         """
         return iter((self.x, self.y))
 
     @property
     def array(self) -> npt.NDArray[np.float64]:
         """
-        Convert vector to array
-        :return: array containing [x, y]
+        将向量转换为数组。
+        :return: 包含 [x, y] 的数组。
         """
         return np.array([self.x, self.y], dtype=np.float64)
 
     def __hash__(self) -> int:
-        """Hash method"""
+        """哈希方法。"""
         return hash((self.x, self.y))
 
 
 @dataclass
 class StateSE2(Point2D):
     """
-    SE2 state - representing [x, y, heading]
+    SE2 状态 - 表示 [x, y, heading]
     """
 
-    heading: float  # [rad] heading of a state
+    heading: float  # [弧度] 状态的航向角
     __slots__ = "heading"
 
     @property
     def point(self) -> Point2D:
         """
-        Gets a point from the StateSE2
-        :return: Point with x and y from StateSE2
+        从 StateSE2 获取一个点
+        :return: 包含 x 和 y 的 Point2D
         """
         return Point2D(self.x, self.y)
 
     def as_matrix(self) -> npt.NDArray[np.float32]:
         """
-        :return: 3x3 2D transformation matrix representing the SE2 state.
+        :return: 表示 SE2 状态的 3x3 二维变换矩阵。
         """
         return np.array(
             [
@@ -368,7 +368,7 @@ class StateSE2(Point2D):
 
     def as_matrix_3d(self) -> npt.NDArray[np.float32]:
         """
-        :return: 4x4 3D transformation matrix representing the SE2 state projected to SE3.
+        :return: 表示投影到 SE3 的 SE2 状态的 4x4 三维变换矩阵。
         """
         return np.array(
             [
@@ -381,19 +381,19 @@ class StateSE2(Point2D):
 
     def distance_to(self, state: StateSE2) -> float:
         """
-        Compute the euclidean distance between two points
-        :param state: state to compute distance to
-        :return distance between two points
+        计算两个点之间的欧几里得距离
+        :param state: 要计算距离的状态
+        :return: 两个点之间的距离
         """
         return float(np.hypot(self.x - state.x, self.y - state.y))
 
     @staticmethod
     def from_matrix(matrix: npt.NDArray[np.float32]) -> StateSE2:
         """
-        :param matrix: 3x3 2D transformation matrix
-        :return: StateSE2 object
+        :param matrix: 3x3 二维变换矩阵
+        :return: StateSE2 对象
         """
-        assert matrix.shape == (3, 3), f"Expected 3x3 transformation matrix, but input matrix has shape {matrix.shape}"
+        assert matrix.shape == (3, 3), f"期望 3x3 变换矩阵，但输入矩阵的形状为 {matrix.shape}"
 
         vector = [matrix[0, 2], matrix[1, 2], np.arctan2(matrix[1, 0], matrix[0, 0])]
         return StateSE2.deserialize(vector)
@@ -401,29 +401,29 @@ class StateSE2(Point2D):
     @staticmethod
     def deserialize(vector: List[float]) -> StateSE2:
         """
-        Deserialize vector into state SE2
-        :param vector: serialized list of floats
+        将向量反序列化为 SE2 状态
+        :param vector: 序列化的浮点数列表
         :return: StateSE2
         """
         if len(vector) != 3:
-            raise RuntimeError(f'Expected a vector of size 3, got {len(vector)}')
+            raise RuntimeError(f'期望向量大小为 3，实际为 {len(vector)}')
 
         return StateSE2(x=vector[0], y=vector[1], heading=vector[2])
 
     def serialize(self) -> List[float]:
         """
-        :return: list of serialized variables [X, Y, Heading]
+        :return: 序列化变量的列表 [X, Y, Heading]
         """
         return [self.x, self.y, self.heading]
 
     def __eq__(self, other: object) -> bool:
         """
-        Compare two state SE2
-        :param other: object
-        :return: true if the objects are equal, false otherwise
+        比较两个 SE2 状态
+        :param other: 对象
+        :return: 如果对象相等则返回 True，否则返回 False
         """
         if not isinstance(other, StateSE2):
-            # Return NotImplemented in case the classes are not of the same type
+            # 如果类类型不同，返回 NotImplemented
             return NotImplemented
         return (
             math.isclose(self.x, other.x, abs_tol=1e-3)
@@ -433,13 +433,13 @@ class StateSE2(Point2D):
 
     def __iter__(self) -> Iterable[float]:
         """
-        :return: iterator of tuples (x, y, heading)
+        :return: 包含 (x, y, heading) 的迭代器
         """
         return iter((self.x, self.y, self.heading))
 
     def __hash__(self) -> int:
         """
-        :return: hash for this object
+        :return: 此对象的哈希值
         """
         return hash((self.x, self.y, self.heading))
 
@@ -447,27 +447,27 @@ class StateSE2(Point2D):
 @dataclass
 class ProgressStateSE2(StateSE2):
     """
-    StateSE2 parameterized by progress
+    通过进度参数化的 SE2 状态
     """
 
-    progress: float  # [m] distance along a path
+    progress: float  # [米] 沿路径的距离
     __slots__ = "progress"
 
     @staticmethod
     def deserialize(vector: List[float]) -> ProgressStateSE2:
         """
-        Deserialize vector into this class
-        :param vector: containing raw float numbers containing [progress, x, ,y, heading]
-        :return: ProgressStateSE2 class
+        将向量反序列化为此类
+        :param vector: 包含原始浮点数 [progress, x, y, heading]
+        :return: ProgressStateSE2 类
         """
         if len(vector) != 4:
-            raise RuntimeError(f'Expected a vector of size 4, got {len(vector)}')
+            raise RuntimeError(f'期望向量大小为 4，实际为 {len(vector)}')
 
         return ProgressStateSE2(progress=vector[0], x=vector[1], y=vector[2], heading=vector[3])
 
     def __iter__(self) -> Iterable[Union[float]]:
         """
-        :return: an iterator over the tuble of (progress, x, y, heading) states
+        :return: 包含 (progress, x, y, heading) 状态的迭代器
         """
         return iter((self.progress, self.x, self.y, self.heading))
 
@@ -475,53 +475,227 @@ class ProgressStateSE2(StateSE2):
 @dataclass
 class TemporalStateSE2(StateSE2):
     """
-    Representation of a temporal state
+    表示时间状态的类
     """
 
-    time_point: TimePoint  # state at a time
+    time_point: TimePoint  # 状态对应的时间点
 
     @property
     def time_us(self) -> int:
         """
-        :return: [us] time stamp in micro seconds
+        :return: [微秒] 时间戳
         """
         return self.time_point.time_us
 
     @property
     def time_seconds(self) -> float:
         """
-        :return: [s] time stamp in seconds
+        :return: [秒] 时间戳
         """
         return self.time_us * 1e-6
 
 
 class StateVector2D:
-    """Representation of vector in 2d."""
+    """表示二维向量的类。"""
 
     __slots__ = "_x", "_y", "_array"
 
     def __init__(self, x: float, y: float):
         """
-        Create StateVector2D object
-        :param x: float direction
-        :param y: float direction
+        创建 StateVector2D 对象
+        :param x: 浮点数方向
+        :param y: 浮点数方向
         """
-        self._x = x  # x-axis in the vector.
-        self._y = y  # y-axis in the vector.
+        self._x = x  # 向量的 x 轴。
+        self._y = y  # 向量的 y 轴。
+
+        self._array: npt.NDArray[np.float64] = np.array([self.x, self.y], dtype=np.float64)
+
+    def __repr__(self) -> str:
+       # filepath: /home/mark/nuplan-devkit/nuplan/common/actor_state/state_representation.py
+@dataclass
+class StateSE2(Point2D):
+    """
+    SE2 状态 - 表示 [x, y, heading]
+    """
+
+    heading: float  # [弧度] 状态的航向角
+    __slots__ = "heading"
+
+    @property
+    def point(self) -> Point2D:
+        """
+        从 StateSE2 获取一个点
+        :return: 包含 x 和 y 的 Point2D
+        """
+        return Point2D(self.x, self.y)
+
+    def as_matrix(self) -> npt.NDArray[np.float32]:
+        """
+        :return: 表示 SE2 状态的 3x3 二维变换矩阵。
+        """
+        return np.array(
+            [
+                [np.cos(self.heading), -np.sin(self.heading), self.x],
+                [np.sin(self.heading), np.cos(self.heading), self.y],
+                [0.0, 0.0, 1.0],
+            ]
+        )
+
+    def as_matrix_3d(self) -> npt.NDArray[np.float32]:
+        """
+        :return: 表示投影到 SE3 的 SE2 状态的 4x4 三维变换矩阵。
+        """
+        return np.array(
+            [
+                [np.cos(self.heading), -np.sin(self.heading), 0.0, self.x],
+                [np.sin(self.heading), np.cos(self.heading), 0.0, self.y],
+                [0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ]
+        )
+
+    def distance_to(self, state: StateSE2) -> float:
+        """
+        计算两个点之间的欧几里得距离
+        :param state: 要计算距离的状态
+        :return: 两个点之间的距离
+        """
+        return float(np.hypot(self.x - state.x, self.y - state.y))
+
+    @staticmethod
+    def from_matrix(matrix: npt.NDArray[np.float32]) -> StateSE2:
+        """
+        :param matrix: 3x3 二维变换矩阵
+        :return: StateSE2 对象
+        """
+        assert matrix.shape == (3, 3), f"期望 3x3 变换矩阵，但输入矩阵的形状为 {matrix.shape}"
+
+        vector = [matrix[0, 2], matrix[1, 2], np.arctan2(matrix[1, 0], matrix[0, 0])]
+        return StateSE2.deserialize(vector)
+
+    @staticmethod
+    def deserialize(vector: List[float]) -> StateSE2:
+        """
+        将向量反序列化为 SE2 状态
+        :param vector: 序列化的浮点数列表
+        :return: StateSE2
+        """
+        if len(vector) != 3:
+            raise RuntimeError(f'期望向量大小为 3，实际为 {len(vector)}')
+
+        return StateSE2(x=vector[0], y=vector[1], heading=vector[2])
+
+    def serialize(self) -> List[float]:
+        """
+        :return: 序列化变量的列表 [X, Y, Heading]
+        """
+        return [self.x, self.y, self.heading]
+
+    def __eq__(self, other: object) -> bool:
+        """
+        比较两个 SE2 状态
+        :param other: 对象
+        :return: 如果对象相等则返回 True，否则返回 False
+        """
+        if not isinstance(other, StateSE2):
+            # 如果类类型不同，返回 NotImplemented
+            return NotImplemented
+        return (
+            math.isclose(self.x, other.x, abs_tol=1e-3)
+            and math.isclose(self.y, other.y, abs_tol=1e-3)
+            and math.isclose(self.heading, other.heading, abs_tol=1e-4)
+        )
+
+    def __iter__(self) -> Iterable[float]:
+        """
+        :return: 包含 (x, y, heading) 的迭代器
+        """
+        return iter((self.x, self.y, self.heading))
+
+    def __hash__(self) -> int:
+        """
+        :return: 此对象的哈希值
+        """
+        return hash((self.x, self.y, self.heading))
+
+
+@dataclass
+class ProgressStateSE2(StateSE2):
+    """
+    通过进度参数化的 SE2 状态
+    """
+
+    progress: float  # [米] 沿路径的距离
+    __slots__ = "progress"
+
+    @staticmethod
+    def deserialize(vector: List[float]) -> ProgressStateSE2:
+        """
+        将向量反序列化为此类
+        :param vector: 包含原始浮点数 [progress, x, y, heading]
+        :return: ProgressStateSE2 类
+        """
+        if len(vector) != 4:
+            raise RuntimeError(f'期望向量大小为 4，实际为 {len(vector)}')
+
+        return ProgressStateSE2(progress=vector[0], x=vector[1], y=vector[2], heading=vector[3])
+
+    def __iter__(self) -> Iterable[Union[float]]:
+        """
+        :return: 包含 (progress, x, y, heading) 状态的迭代器
+        """
+        return iter((self.progress, self.x, self.y, self.heading))
+
+
+@dataclass
+class TemporalStateSE2(StateSE2):
+    """
+    表示时间状态的类
+    """
+
+    time_point: TimePoint  # 状态对应的时间点
+
+    @property
+    def time_us(self) -> int:
+        """
+        :return: [微秒] 时间戳
+        """
+        return self.time_point.time_us
+
+    @property
+    def time_seconds(self) -> float:
+        """
+        :return: [秒] 时间戳
+        """
+        return self.time_us * 1e-6
+class StateVector2D:
+    """表示二维向量的类。"""
+
+    __slots__ = "_x", "_y", "_array"
+
+    def __init__(self, x: float, y: float):
+        """
+        创建 StateVector2D 对象
+        :param x: 浮点数方向
+        :param y: 浮点数方向
+        """
+        self._x = x  # 向量的 x 轴。
+        self._y = y  # 向量的 y 轴。
 
         self._array: npt.NDArray[np.float64] = np.array([self.x, self.y], dtype=np.float64)
 
     def __repr__(self) -> str:
         """
-        :return: string containing representation of this class
+        :return: 包含此类表示的字符串
         """
         return f'x: {self.x}, y: {self.y}'
 
     def __eq__(self, other: object) -> bool:
         """
-        Compare other object with this class
-        :param other: object
-        :return: true if other state vector is the same as self
+        比较其他对象与此类是否相等
+        :param other: 对象
+        :return: 如果其他状态向量与 self 相同，则返回 True
         """
         if not isinstance(other, StateVector2D):
             return NotImplemented
@@ -530,14 +704,14 @@ class StateVector2D:
     @property
     def array(self) -> npt.NDArray[np.float64]:
         """
-        Convert vector to array
-        :return: array containing [x, y]
+        将向量转换为数组
+        :return: 包含 [x, y] 的数组
         """
         return self._array
 
     @array.setter
     def array(self, other: npt.NDArray[np.float64]) -> None:
-        """Custom setter so that the object is not corrupted."""
+        """自定义 setter，以防止对象被破坏。"""
         self._array = other
         self._x = other[0]
         self._y = other[1]
@@ -545,31 +719,31 @@ class StateVector2D:
     @property
     def x(self) -> float:
         """
-        :return: x float state
+        :return: x 浮点状态
         """
         return self._x
 
     @x.setter
     def x(self, x: float) -> None:
-        """Custom setter so that the object is not corrupted."""
+        """自定义 setter，以防止对象被破坏。"""
         self._x = x
         self._array[0] = x
 
     @property
     def y(self) -> float:
         """
-        :return: y float state
+        :return: y 浮点状态
         """
         return self._y
 
     @y.setter
     def y(self, y: float) -> None:
-        """Custom setter so that the object is not corrupted."""
+        """自定义 setter，以防止对象被破坏。"""
         self._y = y
         self._array[1] = y
 
     def magnitude(self) -> float:
         """
-        :return: magnitude of vector
+        :return: 向量的大小
         """
         return float(np.hypot(self.x, self.y))

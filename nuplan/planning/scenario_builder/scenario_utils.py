@@ -3,12 +3,11 @@ from typing import List
 
 def sample_indices_with_time_horizon(num_samples: int, time_horizon: float, time_interval: float) -> List[int]:
     """
-    Samples the indices that can access N number of samples in a T time horizon from a sequence
-    of temporal elemements with DT time interval.
-    :param num_samples: number of elements to sample.
-    :param time_horizon: [s] time horizon of sampled elements.
-    :param time_interval: [s] time interval of sequence to sample from.
-    :return: sampled indices that access the temporal sequence.
+    从一个时间间隔为 DT 的时序序列中，采样能在 T 时间范围内获取 N 个样本的索引。
+    :param num_samples: 要采样的元素数量。
+    :param time_horizon: [秒] 采样元素的时间范围。
+    :param time_interval: [秒] 要采样的序列的时间间隔。
+    :return: 能访问时序序列的采样索引。
     """
     if time_horizon <= 0.0 or time_interval <= 0.0 or time_horizon < time_interval:
         raise ValueError(
@@ -16,13 +15,13 @@ def sample_indices_with_time_horizon(num_samples: int, time_horizon: float, time
             ' and both must be positive.'
         )
 
-    # Compute step size and number of intervals to sample from
+    # 计算步长和可采样的区间数
     num_intervals = int(time_horizon / time_interval) + 1
     step_size = num_intervals // num_samples
 
     assert step_size > 0, f"Cannot get {num_samples} samples in a {time_horizon}s horizon at {time_interval}s intervals"
 
-    # Compute the indices
+    # 计算采样索引
     indices = list(range(step_size, num_intervals + 1, step_size))
     indices = indices[:num_samples]
 

@@ -9,13 +9,13 @@ from nuplan.common.utils.split_state import SplitState
 
 
 class Waypoint(InterpolatableState):
-    """Represents a waypoint which is part of a trajectory. Optionals to allow for geometric trajectory"""
+    """表示轨迹中的一个航点。选项允许表示几何轨迹"""
 
     def __init__(self, time_point: TimePoint, oriented_box: OrientedBox, velocity: Optional[StateVector2D] = None):
         """
-        :param time_point: TimePoint corresponding to the Waypoint
-        :param oriented_box: Position of the oriented box at the Waypoint
-        :param velocity: Optional velocity information
+        :param time_point: 航点对应的时间点
+        :param oriented_box: 航点处的有向盒位置
+        :param velocity: 可选的速度信息
         """
         self._time_point = time_point
         self._oriented_box = oriented_box
@@ -23,8 +23,8 @@ class Waypoint(InterpolatableState):
 
     def __iter__(self) -> Iterable[Union[int, float]]:
         """
-        Iterator for waypoint variables.
-        :return: An iterator to the variables of the Waypoint.
+        航点变量的迭代器。
+        :return: 航点变量的迭代器。
         """
         return iter(
             (
@@ -39,9 +39,9 @@ class Waypoint(InterpolatableState):
 
     def __eq__(self, other: Any) -> bool:
         """
-        Comparison between two Waypoints.
-        :param other: Other object.
-        :return True if both objects are same.
+        比较两个航点是否相等。
+        :param other: 另一个对象。
+        :return: 如果两个对象相同则返回 True。
         """
         if not isinstance(other, Waypoint):
             return NotImplemented
@@ -54,70 +54,70 @@ class Waypoint(InterpolatableState):
 
     def __repr__(self) -> str:
         """
-        :return: A string describing the object.
+        :return: 描述对象的字符串。
         """
         return self.__class__.__qualname__ + "(" + ', '.join([f"{f}={v}" for f, v in self.__dict__.items()]) + ")"
 
     @property
     def center(self) -> StateSE2:
         """
-        Getter for center position of the waypoint
-        :return: StateSE2 referring to position of the waypoint
+        获取航点的中心位置
+        :return: 表示航点位置的 StateSE2
         """
         return self._oriented_box.center
 
     @property
     def time_point(self) -> TimePoint:
         """
-        Getter for time point corresponding to the waypoint
-        :return: The time point
+        获取航点对应的时间点
+        :return: 时间点
         """
         return self._time_point
 
     @property
     def oriented_box(self) -> OrientedBox:
         """
-        Getter for the oriented box corresponding to the waypoint
-        :return: The oriented box
+        获取航点对应的有向盒
+        :return: 有向盒
         """
         return self._oriented_box
 
     @property
     def x(self) -> float:
         """
-        Getter for the x position of the waypoint
-        :return: The x position
+        获取航点的 x 坐标
+        :return: x 坐标
         """
         return self._oriented_box.center.x  # type:ignore
 
     @property
     def y(self) -> float:
         """
-        Getter for the y position of the waypoint
-        :return: The y position
+        获取航点的 y 坐标
+        :return: y 坐标
         """
         return self._oriented_box.center.y  # type:ignore
 
     @property
     def heading(self) -> float:
         """
-        Getter for the heading of the waypoint
-        :return: The heading
+        获取航点的航向角
+        :return: 航向角
         """
         return self._oriented_box.center.heading  # type:ignore
 
     @property
     def velocity(self) -> Optional[StateVector2D]:
         """
-        Getter for the velocity corresponding to the waypoint
-        :return: The velocity, None if not available
+        获取航点对应的速度
+        :return: 速度，如果不可用则为 None
         """
         return self._velocity
 
     def serialize(self) -> List[Union[int, float]]:
         """
-        Serializes the object as a list
-        :return: Serialized object as a list
+        将对象序列化为列表
+        :return: 序列化后的对象列表
         """
         return [
             self.time_point.time_us,
@@ -134,11 +134,11 @@ class Waypoint(InterpolatableState):
     @staticmethod
     def deserialize(vector: List[Union[int, float]]) -> Waypoint:
         """
-        Deserializes the object.
-        :param vector: a list of data to initialize a waypoint
-        :return: Waypoint
+        反序列化对象。
+        :param vector: 用于初始化航点的数据列表
+        :return: 航点
         """
-        assert len(vector) == 9, f'Expected a vector of size 9, got {len(vector)}'
+        assert len(vector) == 9, f'期望向量大小为 9，实际为 {len(vector)}'
 
         return Waypoint(
             time_point=TimePoint(int(vector[0])),
@@ -147,7 +147,7 @@ class Waypoint(InterpolatableState):
         )
 
     def to_split_state(self) -> SplitState:
-        """Inherited, see superclass."""
+        """继承自父类，参见父类文档。"""
         linear_states = [
             self.time_point.time_us,
             self._oriented_box.center.x,
@@ -162,10 +162,10 @@ class Waypoint(InterpolatableState):
 
     @staticmethod
     def from_split_state(split_state: SplitState) -> Waypoint:
-        """Inherited, see superclass."""
+        """继承自父类，参见父类文档。"""
         total_state_length = len(split_state)
 
-        assert total_state_length == 9, f'Expected a vector of size 9, got {total_state_length}'
+        assert total_state_length == 9, f'期望向量大小为 9，实际为 {total_state_length}'
 
         return Waypoint(
             time_point=TimePoint(int(split_state.linear_states[0])),
